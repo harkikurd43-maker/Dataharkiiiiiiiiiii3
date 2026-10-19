@@ -2,432 +2,276 @@
 <html lang="ckb" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>DEF-INTEL // دەزگای هەواڵگری و چاودێری نیشتمانی</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>DEF-INTEL // دەزگای هەواڵگری نیشتمانی</title>
 
-<!-- فۆنتە تاکتیکی و کوردییەکان -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 
-<!-- نەخشەی Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
 :root {
   --term-green: #00ff66;
-  --term-green-glow: rgba(0, 255, 102, 0.4);
   --term-cyan: #00f0ff;
-  --term-cyan-glow: rgba(0, 240, 255, 0.35);
   --term-amber: #ffb700;
   --term-crimson: #ff003c;
-  --term-crimson-glow: rgba(255, 0, 60, 0.4);
   --bg-void: #010409;
-  --bg-panel: rgba(5, 10, 20, 0.94);
-  --bg-card: rgba(8, 16, 30, 0.85);
+  --bg-panel: rgba(5, 10, 20, 0.98);
   --border-cyan: 1px solid rgba(0, 240, 255, 0.3);
-  --border-green: 1px solid rgba(0, 255, 102, 0.3);
-  --border-dark: 1px solid #152238;
   --font-kurdish: 'Vazirmatn', Tahoma, sans-serif;
   --font-code: 'JetBrains Mono', 'Share Tech Mono', monospace;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: var(--font-kurdish) !important;
-  font-weight: 700;
-  -webkit-tap-highlight-color: transparent;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-kurdish) !important; font-weight: 700; -webkit-tap-highlight-color: transparent; }
 
 body {
-  background: var(--bg-void);
-  color: #e2e8f0;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background-image: 
-    radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.03) 0%, transparent 80%),
-    linear-gradient(rgba(0, 255, 102, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 255, 102, 0.03) 1px, transparent 1px);
-  background-size: 100% 100%, 24px 24px, 24px 24px;
+  background: var(--bg-void); color: #e2e8f0; height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
 }
 
-/* هێڵی سکانینگی ڕاداری هەواڵگری */
-body::after {
-  content: " ";
-  position: fixed; inset: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%);
-  background-size: 100% 3px;
-  pointer-events: none;
-  z-index: 9999;
-  opacity: 0.7;
+/* ================= شاشەی Login و Sign up ================= */
+#authScreen {
+  position: fixed; inset: 0; z-index: 100000;
+  background: radial-gradient(circle at 50% 30%, #0c1a3a 0%, #040916 100%);
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.login-card {
+  background: rgba(10, 24, 54, 0.9); backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px;
+  width: 100%; max-width: 380px; padding: 35px 25px;
+  display: flex; flex-direction: column; align-items: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+}
+.avatar-circle {
+  width: 68px; height: 68px; border-radius: 50%;
+  background: #172d59; display: flex; align-items: center; justify-content: center;
+  margin-bottom: 18px; color: #4378db;
+}
+.login-title { font-size: 26px; color: #ffffff; font-weight: 900; margin-bottom: 22px; }
+
+.input-group { width: 100%; margin-bottom: 14px; text-align: right; }
+.input-label { font-size: 11.5px; color: #94a3b8; margin-bottom: 5px; display: block; }
+.input-box-wrapper {
+  position: relative; display: flex; align-items: center;
+  background: #081636; border: 1px solid #1c3366; border-radius: 12px;
+}
+.input-icon { position: absolute; left: 14px; color: #64748b; font-size: 14px; }
+.auth-input {
+  width: 100%; background: transparent; border: none; padding: 12px 14px 12px 40px;
+  color: #fff; font-size: 13px; outline: none; font-family: var(--font-code) !important;
+  direction: ltr; text-align: left;
 }
 
-/* ================= تێرمیناڵی سەرەوە (HUD HEADER) ================= */
-header {
-  background: var(--bg-panel);
-  border-bottom: 1.5px solid var(--term-cyan);
-  padding: 6px 14px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  z-index: 1000;
-  box-shadow: 0 4px 25px rgba(0, 240, 255, 0.15);
-  flex-wrap: wrap;
-  gap: 8px;
+.btn-primary-auth {
+  width: 100%; background: #1d61f2; border: none; color: #fff;
+  padding: 13px; border-radius: 12px; font-size: 14px; font-weight: 900;
+  cursor: pointer; margin-top: 10px; transition: 0.2s; box-shadow: 0 4px 20px rgba(29, 97, 242, 0.4);
+}
+.btn-primary-auth:hover { background: #256be5; }
+
+.auth-toggle-link {
+  margin-top: 15px; font-size: 11.5px; color: #60a5fa; cursor: pointer; text-decoration: none;
 }
 
-.terminal-brand { display: flex; align-items: center; gap: 10px; }
-.pulse-indicator {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--term-green); box-shadow: 0 0 10px var(--term-green);
-  animation: radarBlink 1.4s infinite;
+/* ================= سەری پەیج و HUD ================= */
+.sticky-top-container {
+  position: sticky; top: 0; z-index: 2000; background: var(--bg-panel);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.85); border-bottom: 1px solid rgba(0, 240, 255, 0.4);
 }
-@keyframes radarBlink { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(1.3); } }
+.tactical-ticker {
+  background: #020712; border-bottom: 1px solid #14223d; padding: 4px 10px;
+  display: flex; justify-content: space-between; align-items: center; font-size: 11px;
+}
+header { padding: 7px 10px; display: flex; flex-direction: column; gap: 7px; }
+.header-row-1 { display: flex; justify-content: space-between; align-items: center; }
 
-.terminal-tag {
-  font-family: var(--font-code) !important;
-  font-size: 10.5px; color: var(--term-cyan);
-  background: rgba(0, 240, 255, 0.08); border: 1px solid var(--term-cyan);
-  padding: 2px 7px; border-radius: 3px; letter-spacing: 1px;
+.tactical-hud-badge {
+  direction: ltr !important; display: inline-flex; align-items: center;
+  background: #030814; border: 1px solid #1e293b; border-radius: 6px; padding: 2px 4px; gap: 5px;
 }
-.brand-name {
-  font-size: 13.5px; font-weight: 900;
-  color: #ffffff; letter-spacing: 0.5px;
-}
-.brand-name span { color: var(--term-cyan); }
+.ip-chip { color: #94a3b8; font-family: var(--font-code) !important; font-size: 10px; background: #081124; padding: 2px 6px; border-radius: 4px; border: 1px solid #1e293b; }
+.pts-chip { color: var(--term-green); font-family: var(--font-code) !important; font-size: 11px; font-weight: 900; background: rgba(0, 255, 102, 0.12); border: 1px solid var(--term-green); padding: 2px 8px; border-radius: 4px; }
 
-.city-selector-hud {
-  display: flex; background: #030814;
-  padding: 2px; border-radius: 6px; border: 1px solid #1e293b; gap: 3px;
+.header-row-2 { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.city-selector-hud, .nav-hacker-tabs { display: flex; background: #030814; padding: 2px; border-radius: 6px; border: 1px solid #1e293b; gap: 2px; }
+.city-pill-btn, .tab-cmd-btn {
+  background: transparent; color: #64748b; border: none; padding: 5px 9px; border-radius: 4px; font-size: 11px; cursor: pointer;
 }
-.city-pill-btn {
-  background: transparent; color: #64748b; border: 1px solid transparent;
-  padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;
-  transition: 0.2s; display: flex; align-items: center; gap: 4px;
-}
-.city-pill-btn.active {
-  background: rgba(0, 240, 255, 0.18); color: var(--term-cyan);
-  border-color: var(--term-cyan);
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
-  text-shadow: 0 0 8px var(--term-cyan);
-}
+.city-pill-btn.active, .tab-cmd-btn.active { background: rgba(0, 240, 255, 0.18); color: var(--term-cyan); border: 1px solid var(--term-cyan); }
+.tab-cmd-btn.active.elec-mode { background: rgba(0, 255, 102, 0.15); color: var(--term-green); border-color: var(--term-green); }
 
-.nav-hacker-tabs {
-  display: flex; background: #030814;
-  padding: 2px; border-radius: 6px; border: 1px solid #1e293b; gap: 3px;
-}
-.tab-cmd-btn {
-  background: transparent; color: #64748b; border: none;
-  padding: 5px 12px; border-radius: 5px; font-size: 11.5px; cursor: pointer;
-  display: flex; align-items: center; gap: 5px; transition: 0.2s;
-}
-.tab-cmd-btn.active {
-  background: rgba(0, 255, 102, 0.15); color: var(--term-green);
-  border: 1px solid var(--term-green);
-  text-shadow: 0 0 8px rgba(0, 255, 102, 0.6);
-  box-shadow: 0 0 10px rgba(0, 255, 102, 0.2);
-}
-.tab-cmd-btn.active.elec-mode {
-  background: rgba(0, 240, 255, 0.15); color: var(--term-cyan);
-  border-color: var(--term-cyan);
-  text-shadow: 0 0 8px var(--term-cyan);
-}
+.main-viewport { flex: 1; position: relative; overflow: hidden; }
 
-.main-viewport { flex: 1; height: calc(100vh - 48px); position: relative; }
+/* هاوڵاتیان */
+#tabFamily { height: 100%; overflow-y: auto; padding: 8px 10px 60px; display: flex; flex-direction: column; gap: 8px; }
+.terminal-box { background: var(--bg-panel); border: var(--border-cyan); border-radius: 8px; padding: 10px 12px; position: relative; }
+.hacker-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 5px; }
+.term-field label { font-size: 10px; color: #94a3b8; display: block; margin-bottom: 2px; }
+.term-field input { width: 100%; background: #030814; border: 1px solid #1e293b; border-radius: 5px; padding: 6px 8px; color: #fff; font-size: 11.5px; outline: none; }
+.btn-terminal-exec { background: linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(0, 240, 255, 0.08)); border: 1.5px solid var(--term-cyan); color: var(--term-cyan); border-radius: 5px; font-size: 12px; cursor: pointer; padding: 7px; width: 100%; font-weight: 900; }
 
-/* ================= بەشی ١: خێزان و تۆماری مەدەنی ================= */
-#tabFamily {
-  height: 100%; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px;
-}
-.terminal-box {
-  background: var(--bg-panel); border: var(--border-cyan);
-  border-radius: 8px; padding: 12px 14px; position: relative;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
-}
-.terminal-box::before {
-  content: attr(data-tag);
-  position: absolute; top: -8px; left: 12px;
-  background: #010409; font-family: var(--font-code) !important;
-  font-size: 9px; color: var(--term-cyan); padding: 0 6px;
-  border: 1px solid var(--term-cyan); border-radius: 3px;
-}
-
-.hacker-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-top: 6px;
-}
-.term-field label { font-size: 10.5px; color: #94a3b8; display: block; margin-bottom: 3px; }
-.term-field input {
-  width: 100%; background: #030814; border: 1px solid #1e293b;
-  border-radius: 5px; padding: 7px 9px; color: #fff; font-size: 12px; outline: none;
-  transition: 0.2s;
-}
-.term-field input:focus {
-  border-color: var(--term-cyan);
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
-}
-
-.btn-terminal-exec {
-  background: linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(0, 240, 255, 0.08));
-  border: 1.5px solid var(--term-cyan); color: var(--term-cyan);
-  border-radius: 5px; font-size: 12px; cursor: pointer; padding: 7px 12px;
-  width: 100%; transition: 0.2s; font-weight: 800;
-}
-.btn-terminal-exec:hover {
-  background: var(--term-cyan); color: #010409;
-  box-shadow: 0 0 16px var(--term-cyan);
-}
-
-.table-terminal-card {
-  background: var(--bg-panel); border: var(--border-dark);
-  border-radius: 8px; flex: 1; display: flex; flex-direction: column; overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
-}
-.table-bar-hacker {
-  padding: 8px 12px; border-bottom: 1px solid #1e293b;
-  display: flex; justify-content: space-between; align-items: center; background: #020611;
-}
-.table-scroll-area { width: 100%; overflow-x: auto; flex: 1; }
-table { width: 100%; border-collapse: collapse; text-align: right; font-size: 12px; }
-th {
-  background: #040916; padding: 9px 12px; color: var(--term-cyan);
-  border-bottom: 1.5px solid rgba(0, 240, 255, 0.3); white-space: nowrap; font-size: 11px;
-}
-td { padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); white-space: nowrap; }
-tr:hover td { background: rgba(0, 240, 255, 0.05); }
-
-.tag-code {
-  font-family: var(--font-code) !important;
-  font-size: 10px; padding: 2px 6px; border-radius: 4px;
-}
-.tag-fam-code { background: rgba(0, 240, 255, 0.1); border: 1px solid var(--term-cyan); color: var(--term-cyan); }
-.tag-rc-code { background: rgba(255, 183, 0, 0.1); border: 1px solid var(--term-amber); color: var(--term-amber); }
-.tag-age { background: rgba(0, 255, 102, 0.1); border: 1px solid var(--term-green); color: var(--term-green); }
+.table-terminal-card { background: var(--bg-panel); border: 1px solid #152238; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; }
+.table-bar-hacker { padding: 6px 10px; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; background: #020611; }
+.table-scroll-area { width: 100%; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; text-align: right; font-size: 11.5px; }
+th { background: #040916; padding: 8px 10px; color: var(--term-cyan); border-bottom: 1.5px solid rgba(0, 240, 255, 0.3); white-space: nowrap; font-size: 10.5px; }
+td { padding: 7px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); white-space: nowrap; }
 
 .btn-tactical-act {
   background: transparent; border: 1px solid #334155; color: #94a3b8;
-  padding: 4px 9px; border-radius: 4px; font-size: 11px; cursor: pointer; transition: 0.15s;
+  padding: 4px 8px; border-radius: 4px; font-size: 10.5px; cursor: pointer; transition: 0.15s;
 }
-.btn-tactical-act:hover { border-color: var(--term-cyan); color: var(--term-cyan); }
+.btn-tactical-act:hover { border-color: var(--term-cyan); color: #fff; }
 
-/* ================= بەشی ٢: نەخشەی کارەبا (چاککراوی تەواو) ================= */
+/* نەخشەی کارەبا */
 #tabElec { height: 100%; width: 100%; position: relative; }
 #map { width: 100%; height: 100%; background: #020408; }
+.floating-search-terminal { position: absolute; top: 10px; left: 10px; right: 10px; z-index: 1000; }
+.hacker-search-bar { background: rgba(3, 7, 18, 0.94); border: 1px solid var(--term-cyan); border-radius: 8px; padding: 3px 5px; display: flex; align-items: center; gap: 5px; }
+.hacker-search-bar input { flex: 1; background: transparent; border: none; padding: 7px 10px; color: #fff; font-size: 12px; outline: none; }
+.hacker-search-bar button { background: var(--term-cyan); color: #020408; border: none; font-weight: 900; padding: 7px 12px; border-radius: 5px; font-size: 11px; cursor: pointer; }
 
-.floating-search-terminal {
-  position: absolute; top: 10px; left: 10px; right: 10px; z-index: 1000;
-  display: flex; flex-direction: column; gap: 4px;
-}
-.hacker-search-bar {
-  background: rgba(3, 7, 18, 0.94); backdrop-filter: blur(12px);
-  border: 1px solid var(--term-cyan); border-radius: 8px;
-  padding: 3px 5px; display: flex; align-items: center; gap: 5px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.8);
-}
-.hacker-search-bar input {
-  flex: 1; background: transparent; border: none; padding: 7px 10px;
-  color: #fff; font-size: 12px; outline: none;
-}
-.hacker-search-bar button {
-  background: var(--term-cyan); color: #020408; border: none;
-  font-weight: 900; padding: 7px 12px; border-radius: 5px; font-size: 11px; cursor: pointer;
+/* پەیامی پێویستیی زووم بۆ ٤٠٠م */
+#zoomNoticePrompt {
+  position: absolute; top: 62px; left: 50%; transform: translateX(-50%); z-index: 999;
+  background: rgba(3, 8, 20, 0.92); border: 1px solid var(--term-amber); color: var(--term-amber);
+  padding: 5px 12px; border-radius: 20px; font-size: 11px; pointer-events: none;
+  box-shadow: 0 0 15px rgba(255, 183, 0, 0.3); display: flex; align-items: center; gap: 5px;
 }
 
-/* دراوەری ئەنجامەکان کە ئێستا بە تەواوی سکڕۆڵ دەبێت و ناپچڕێت */
-#elecDrawer {
-  position: absolute; bottom: 0; left: 0; right: 0; z-index: 1001;
-  background: rgba(3, 8, 20, 0.98); backdrop-filter: blur(16px);
-  border-top: 2px solid var(--term-cyan); border-radius: 14px 14px 0 0;
-  padding: 12px 14px 45px;
-  max-height: 75vh; /* بەرزایی تەواو بۆ نیشاندانی هەموو ئەنجامەکان */
-  overflow-y: auto !important;
-  display: none;
-  box-shadow: 0 -10px 40px rgba(0,0,0,0.95);
-  touch-action: pan-y !important;
-  -webkit-overflow-scrolling: touch !important;
-}
+#elecDrawer { position: absolute; bottom: 0; left: 0; right: 0; z-index: 1001; background: rgba(3, 8, 20, 0.98); border-top: 2px solid var(--term-cyan); padding: 12px 14px 50px; max-height: 75vh; overflow-y: auto; display: none; }
+.compact-sub-card { background: rgba(8, 16, 32, 0.92); border: 1px solid #1e293b; border-radius: 7px; padding: 9px 12px; margin-bottom: 6px; }
 
-.drawer-tactical-head {
-  display: flex; justify-content: space-between; align-items: center;
-  padding-bottom: 8px; border-bottom: 1px solid #1e293b; margin-bottom: 10px;
+/* مۆداڵی پرسیاری کارەبا (Poll) */
+#elecPollModal {
+  position: fixed; inset: 0; background: rgba(1, 4, 9, 0.95);
+  backdrop-filter: blur(12px); z-index: 9999999 !important;
+  display: none; align-items: center; justify-content: center; padding: 20px;
 }
+.poll-card {
+  background: #04091a; border: 2px solid var(--term-cyan); border-radius: 14px;
+  width: 100%; max-width: 350px; padding: 25px 20px; text-align: center;
+  box-shadow: 0 0 40px rgba(0, 240, 255, 0.35);
+}
+.btn-yes { background: var(--term-green); color: #000; border: none; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 900; cursor: pointer; flex: 1; }
+.btn-no { background: rgba(255,0,60,0.2); border: 1px solid var(--term-crimson); color: var(--term-crimson); padding: 10px 20px; border-radius: 6px; font-size: 13px; cursor: pointer; flex: 1; }
 
-.grid-tactical-results {
-  display: flex; flex-direction: column; gap: 8px; padding-bottom: 30px;
-}
-
-.compact-sub-card {
-  background: rgba(8, 16, 32, 0.92); border: 1px solid #1e293b;
-  border-radius: 7px; padding: 9px 12px; cursor: pointer; transition: 0.15s;
-}
-.compact-sub-card:hover { border-color: var(--term-cyan); background: rgba(0, 240, 255, 0.06); }
-.card-title-sm { font-size: 13px; color: #fff; font-weight: 800; margin-bottom: 4px; }
-.card-meta-sm { font-size: 11px; color: #94a3b8; display: flex; justify-content: space-between; }
-
-.tactical-layer-box {
-  position: absolute; bottom: 16px; left: 10px; z-index: 999;
-  background: rgba(3, 7, 18, 0.9); border: 1px solid #1e293b;
-  border-radius: 6px; padding: 3px; display: flex; gap: 3px;
-}
-.btn-layer-pill {
-  background: transparent; color: #94a3b8; border: none;
-  padding: 4px 9px; border-radius: 4px; font-size: 10.5px; cursor: pointer;
-}
+.tactical-layer-box { position: absolute; bottom: 16px; left: 10px; z-index: 999; background: rgba(3, 7, 18, 0.9); border: 1px solid #1e293b; border-radius: 6px; padding: 3px; display: flex; gap: 3px; }
+.btn-layer-pill { background: transparent; color: #94a3b8; border: none; padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; }
 .btn-layer-pill.active { background: rgba(0, 229, 255, 0.2); color: var(--term-cyan); border: 1px solid var(--term-cyan); }
-
-.leaflet-popup-content-wrapper {
-  background: rgba(3, 7, 18, 0.98) !important; border: 1px solid var(--term-cyan) !important;
-  color: white !important; border-radius: 8px !important; box-shadow: 0 0 15px rgba(0, 229, 255, 0.3) !important;
-}
-.leaflet-popup-tip { background: #030712 !important; }
-
 .micro-target-point { display: flex; align-items: center; justify-content: center; }
-.micro-ping-core {
-  width: 9px; height: 9px; background: var(--term-green);
-  border: 1.5px solid #ffffff; border-radius: 50%;
-  box-shadow: 0 0 6px var(--term-green);
-}
-.micro-multi-core {
-  width: 13px; height: 13px; background: var(--term-crimson);
-  border: 1.5px solid #ffffff; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 9px; font-family: var(--font-code) !important;
-  font-weight: 900; color: #ffffff; box-shadow: 0 0 8px var(--term-crimson);
-}
+.micro-ping-core { width: 9px; height: 9px; background: var(--term-green); border: 1.5px solid #ffffff; border-radius: 50%; box-shadow: 0 0 6px var(--term-green); }
+.micro-multi-core { width: 13px; height: 13px; background: var(--term-crimson); border: 1.5px solid #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-family: var(--font-code) !important; font-weight: 900; color: #fff; }
 
-/* ================= مۆداڵی دۆسیەی نهێنی هەواڵگری ================= */
-.modal-dossier-overlay {
+/* مۆداڵی دۆسیەی خێزان */
+#dossierModal {
   position: fixed; inset: 0; background: rgba(1, 4, 9, 0.94);
-  backdrop-filter: blur(12px); z-index: 5000; display: none;
-  align-items: center; justify-content: center; padding: 10px;
+  backdrop-filter: blur(12px); z-index: 50000; display: none; align-items: center; justify-content: center; padding: 10px;
 }
 .dossier-terminal-box {
-  background: #020713; border: 1.5px solid var(--term-cyan);
-  border-radius: 10px; width: 100%; max-width: 900px; max-height: 90vh;
-  display: flex; flex-direction: column; overflow: hidden;
-  box-shadow: 0 0 45px rgba(0, 240, 255, 0.25);
-  position: relative;
+  background: #020713; border: 1.5px solid var(--term-cyan); border-radius: 10px;
+  width: 100%; max-width: 900px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;
 }
 .dossier-top-bar {
-  background: #050d20; padding: 10px 16px; border-bottom: 1.5px solid var(--term-cyan);
-  display: flex; justify-content: space-between; align-items: center;
+  background: #050d20; padding: 10px 14px; border-bottom: 1.5px solid var(--term-cyan); display: flex; justify-content: space-between; align-items: center;
 }
-.dossier-content-scroll { padding: 14px; overflow-y: auto; flex: 1; }
+.dossier-content-scroll { padding: 12px; overflow-y: auto; flex: 1; }
+.btn-pdf-export { background: var(--term-green); color: #000; border: none; padding: 5px 12px; border-radius: 4px; font-size: 11px; font-weight: 900; cursor: pointer; }
+.exit-cmd-btn { background: var(--term-crimson); color: #fff; border: none; padding: 5px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; }
 
-.exit-cmd-btn {
-  background: rgba(255, 0, 60, 0.15); border: 1px solid var(--term-crimson);
-  color: var(--term-crimson); padding: 5px 12px; border-radius: 5px;
-  font-size: 11px; font-weight: 900; cursor: pointer; transition: 0.2s;
-}
-.exit-cmd-btn:hover { background: var(--term-crimson); color: white; box-shadow: 0 0 12px var(--term-crimson); }
-
-.btn-pdf-export {
-  background: linear-gradient(135deg, rgba(0, 255, 102, 0.3), rgba(0, 255, 102, 0.1));
-  border: 1.5px solid var(--term-green); color: var(--term-green);
-  padding: 5px 12px; border-radius: 5px; font-size: 11.5px; font-weight: 900;
-  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px;
-}
-.btn-pdf-export:hover {
-  background: var(--term-green); color: #000; box-shadow: 0 0 14px var(--term-green);
-}
-
-/* ================= شاردنەوەی تەواوی نووسینەکانی PDF لەسەر شاشە ================= */
-#printArea {
-  display: none !important; /* هەرگیز لەسەر شاشە دەرناکەوێت و سیستم تێک نادات */
-}
-
+#printArea { display: none !important; }
 @media print {
-  body, html {
-    background: #ffffff !important;
-    color: #000000 !important;
-    height: auto !important;
-    overflow: visible !important;
-  }
-  body::after, header, .main-viewport, .modal-dossier-overlay, .leaflet-control-container {
-    display: none !important;
-  }
-  #printArea {
-    display: block !important;
-    width: 100% !important;
-    background: #ffffff !important;
-    color: #000000 !important;
-    visibility: visible !important;
-    padding: 0 !important;
-  }
-  #printArea * {
-    visibility: visible !important;
-    color: #000000 !important;
-  }
+  body * { visibility: hidden !important; }
+  #printArea, #printArea * { visibility: visible !important; }
+  #printArea { display: block !important; position: absolute; left: 0; top: 0; width: 100%; background: #fff; color: #000; }
 }
 </style>
 </head>
 <body>
 
-<header>
-  <div class="terminal-brand">
-    <div class="pulse-indicator"></div>
-    <div class="terminal-tag">DEF-INTEL // C4ISR</div>
-    <div class="brand-name">ناوەندی هەواڵگری نیشتمانی <span>//</span> CLASSIFIED</div>
+<!-- شاشەی چوونەژوورەوە و خۆتۆمارکردن -->
+<div id="authScreen">
+  <div class="login-card">
+    <div class="avatar-circle">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+    </div>
+    <h2 class="login-title" id="authTitle">Login</h2>
+
+    <div class="input-group">
+      <label class="input-label">Email</label>
+      <div class="input-box-wrapper">
+        <input type="email" id="authEmail" class="auth-input" placeholder="jane.doe@example.com">
+        <span class="input-icon">✉</span>
+      </div>
+    </div>
+
+    <div class="input-group">
+      <label class="input-label">Password</label>
+      <div class="input-box-wrapper">
+        <input type="password" id="authPass" class="auth-input" placeholder="••••••">
+        <span class="input-icon">🔒</span>
+      </div>
+    </div>
+
+    <button class="btn-primary-auth" id="btnAuthSubmit" onclick="handleAuthAction()">Log in</button>
+    <a href="javascript:void(0)" class="auth-toggle-link" id="authToggleLink" onclick="toggleAuthMode()">دروستکردنی هەژماری نوێ (Sign up)</a>
+  </div>
+</div>
+
+<!-- سەری پەیج دوای چوونەژوورەوە -->
+<div class="sticky-top-container">
+  <div class="tactical-ticker">
+    <div style="color:var(--term-cyan);" id="tickerMsg">>_ سیستەمی چاودێری نیشتمانی</div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <span id="userEmailBadge" style="color:#94a3b8;font-size:10.5px;font-family:var(--font-code);">user@mail</span>
+      <a href="javascript:void(0)" onclick="logoutUser()" style="color:var(--term-crimson);font-size:10.5px;">[ دەرچوون ]</a>
+    </div>
   </div>
 
-  <div class="city-selector-hud">
-    <button id="btnCityErbil" class="city-pill-btn active" onclick="switchCivilianCity('erbil')">🏛️ [EBL] هەولێر</button>
-    <button id="btnCitySuli" class="city-pill-btn" onclick="switchCivilianCity('suli')">🌲 [SLI] سلێمانی</button>
-    <button id="btnCityDuhok" class="city-pill-btn" onclick="switchCivilianCity('duhok')">🏔️ [DHK] دهۆك</button>
-  </div>
+  <header>
+    <div class="header-row-1">
+      <div style="font-family:var(--font-code);font-size:11px;color:var(--term-cyan);">DEF-INTEL // C4ISR</div>
+      <div class="tactical-hud-badge">
+        <div class="ip-chip" id="badgeIp">IP: ...</div>
+        <div class="pts-chip" id="badgePts">PTS: 4</div>
+      </div>
+    </div>
 
-  <div class="nav-hacker-tabs">
-    <button id="btnTabFam" class="tab-cmd-btn active" onclick="switchTab('family')">
-      👥 تۆماری هاوڵاتیان
-    </button>
-    <button id="btnTabElec" class="tab-cmd-btn" onclick="switchTab('elec')">
-      ⚡ نەخشەی تاکتیکی کارەبا
-    </button>
-  </div>
-</header>
+    <div class="header-row-2">
+      <div class="city-selector-hud">
+        <button id="btnCityErbil" class="city-pill-btn active" onclick="switchCivilianCity('erbil')">هەولێر</button>
+        <button id="btnCitySuli" class="city-pill-btn" onclick="switchCivilianCity('suli')">سلێمانی</button>
+        <button id="btnCityDuhok" class="city-pill-btn" onclick="switchCivilianCity('duhok')">دهۆك</button>
+      </div>
+      <div class="nav-hacker-tabs">
+        <button id="btnTabFam" class="tab-cmd-btn active" onclick="switchTab('family')">👥 هاوڵاتیان</button>
+        <!-- بەستراوە بە پشکنینی ٢٤ کاتژمێری بۆ ئەوەی هەرکات ویستت بگەڕێیتەوە سەری بەبێ کێشە -->
+        <button id="btnTabElec" class="tab-cmd-btn" onclick="handleElectricityTabClick()">⚡ کارەبا</button>
+      </div>
+    </div>
+  </header>
+</div>
 
 <div class="main-viewport">
 
-  <!-- ================= پەڕەی ١: تۆماری هاوڵاتیان ================= -->
+  <!-- ١: هاوڵاتیان -->
   <div id="tabFamily">
-    <div class="terminal-box" id="civTermBox" data-tag="[ SEC-SYS // DATA-QUERY: ERBIL ]">
+    <div class="terminal-box">
       <div class="hacker-grid">
-        <div class="term-field">
-          <label>ناوی یەکەم</label>
-          <input id="qFirst" placeholder="محمد / احمد..." onkeydown="if(event.key==='Enter') doSearchCivilians()">
-        </div>
-        <div class="term-field">
-          <label>ناوی باوک</label>
-          <input id="qFather" placeholder="علی / قادر..." onkeydown="if(event.key==='Enter') doSearchCivilians()">
-        </div>
-        <div class="term-field">
-          <label>ناوی باپیر</label>
-          <input id="qGrand" placeholder="حسن..." onkeydown="if(event.key==='Enter') doSearchCivilians()">
-        </div>
-        <div class="term-field">
-          <label>ژمارەی خێزان</label>
-          <input id="qFam" placeholder="FAM_NO..." onkeydown="if(event.key==='Enter') doSearchCivilians()">
-        </div>
-        <div style="display:flex;align-items:flex-end;">
-          <button class="btn-terminal-exec" onclick="doSearchCivilians()">[ EXECUTE // پشکنین ]</button>
-        </div>
+        <div class="term-field"><label>ناوی یەکەم</label><input id="qFirst" placeholder="محمد..." onkeydown="if(event.key==='Enter') executeCivilianSearch()"></div>
+        <div class="term-field"><label>ناوی باوک</label><input id="qFather" placeholder="علی..." onkeydown="if(event.key==='Enter') executeCivilianSearch()"></div>
+        <div class="term-field"><label>ناوی باپیر</label><input id="qGrand" placeholder="حسن..." onkeydown="if(event.key==='Enter') executeCivilianSearch()"></div>
+        <div class="term-field"><label>ژمارەی خێزان</label><input id="qFam" placeholder="FAM_NO..." onkeydown="if(event.key==='Enter') executeCivilianSearch()"></div>
       </div>
+      <button class="btn-terminal-exec" style="margin-top:6px;" onclick="executeCivilianSearch()">[ EXECUTE // پشکنین ]</button>
     </div>
 
     <div class="table-terminal-card">
       <div class="table-bar-hacker">
-        <span id="famStatus" style="font-family:var(--font-code);font-size:11px;color:var(--term-cyan);">STATUS: SYSTEM READY</span>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <button onclick="navFam(-1)" class="btn-tactical-act" id="btnPrev" disabled>« پێشوو</button>
-          <span id="famPageText" style="font-family:var(--font-code);font-size:11px;color:#fff;">PAGE 1</span>
-          <button onclick="navFam(1)" class="btn-tactical-act" id="btnNext" disabled>دواتر »</button>
-        </div>
+        <span id="famStatus" style="font-family:var(--font-code);font-size:10.5px;color:var(--term-cyan);">STATUS: READY</span>
       </div>
-
       <div class="table-scroll-area">
         <table>
           <thead>
@@ -438,25 +282,29 @@ tr:hover td { background: rgba(0, 240, 255, 0.05); }
               <th>لەدایکبوون</th>
               <th>خێزان</th>
               <th>تۆمار</th>
-              <th>کرداری هەواڵگری</th>
+              <th>کردار</th>
             </tr>
           </thead>
-          <tbody id="famTableBody"></tbody>
+          <tbody id="famTableBody">
+            <tr><td colspan="7" style="text-align:center;padding:30px;color:#64748b;">🔍 ناوی هاوڵاتی بنووسە لە سەرەوە و کلیک لە [پشکنین] بکە.</td></tr>
+          </tbody>
         </table>
       </div>
     </div>
   </div>
 
-
-  <!-- ================= پەڕەی ٢: نەخشەی کارەبا (چاککراو بە سکڕۆڵی تەواو) ================= -->
-  <div id="tabElec" style="display: none;">
-    
+  <!-- ٢: نەخشەی کارەبا -->
+  <div id="tabElec" style="display:none;">
     <div class="floating-search-terminal">
       <div class="hacker-search-bar">
-        <span style="font-family:var(--font-code);color:var(--term-cyan);padding:0 4px;">>_</span>
-        <input id="elecQuery" placeholder="ناوی بەشداربوو یان ژمارەی ئەژمار..." onkeydown="if(event.key==='Enter') doMultiSearchElectricity()">
-        <button onclick="doMultiSearchElectricity()">پشکنین</button>
+        <input id="elecQuery" placeholder="ناوی بەشداربوو یان ژمارەی ئەژمار..." onkeydown="if(event.key==='Enter') executeElectricitySearch()">
+        <button onclick="executeElectricitySearch()">پشکنین</button>
       </div>
+    </div>
+
+    <!-- پەیامی ئاگاداری زوومکردن بۆ ٤٠٠م -->
+    <div id="zoomNoticePrompt">
+      <span>📍 تکایە نزیکتر بەرەوە (زووم بکە بۆ نزیکەی ٤٠٠م) بۆ بینینی بەشداربووان</span>
     </div>
 
     <div class="tactical-layer-box">
@@ -464,135 +312,276 @@ tr:hover td { background: rgba(0, 240, 255, 0.05); }
       <button id="btnLDark" class="btn-layer-pill" onclick="setMapLayer('dark')">تاریك</button>
       <button id="btnLOsm" class="btn-layer-pill" onclick="setMapLayer('osm')">ئاسایی</button>
     </div>
-
     <div id="map"></div>
-
-    <!-- دراوەری چاککراوی ئەنجامەکان -->
     <div id="elecDrawer">
-      <div class="drawer-tactical-head">
-        <div style="font-family:var(--font-code);font-size:11.5px;color:var(--term-cyan);" id="elecResultCount">
-          [ 0 RESULTS FOUND ]
-        </div>
-        <div style="display:flex;gap:6px;">
-          <button onclick="toggleDrawerHeight()" style="background:#0c192e;border:1px solid var(--term-cyan);color:var(--term-cyan);padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;" id="btnToggleDrawer">⛶ فراوانکردن</button>
-          <button onclick="$('elecDrawer').style.display='none'" style="background:transparent;border:1px solid #334155;color:#fff;width:24px;height:24px;border-radius:4px;cursor:pointer;">✕</button>
-        </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+        <span id="elecResultCount" style="color:var(--term-cyan);font-size:11px;">0 ئەنجام</span>
+        <button onclick="$('elecDrawer').style.display='none'" style="background:transparent;border:1px solid #334155;color:#fff;border-radius:4px;">✕</button>
       </div>
-      <div class="grid-tactical-results" id="elecResultsGrid"></div>
+      <div id="elecResultsGrid" class="grid-tactical-results"></div>
     </div>
-
   </div>
 
 </div>
 
+<!-- مۆداڵی پرسیاری کارەبا (Poll) -->
+<div id="elecPollModal">
+  <div class="poll-card">
+    <div style="font-size:36px;margin-bottom:8px;">⚡</div>
+    <h3 style="color:var(--term-cyan);font-size:15px;margin-bottom:8px;">ئاگاداری چوونەژوورەوە</h3>
+    <p id="pollQuestionText" style="font-size:13px;color:#cbd5e1;line-height:1.6;margin-bottom:20px;">
+      بۆ کردنەوەی ئەم بەشە پێویستت بە <b style="color:var(--term-green);" id="pollPointsCost">3</b> خاڵە و بۆ ماوەی ٢٤ کاتژمێر کراوە دەبێت، دڵنیایت؟
+    </p>
+    <div style="display:flex;gap:10px;">
+      <button onclick="confirmEnterElectricity()" class="btn-yes">بەڵێ</button>
+      <button onclick="closeElectricityPoll()" class="btn-no">نەخێر</button>
+    </div>
+  </div>
+</div>
 
-<!-- ================= مۆداڵی دۆسیەی نهێنی هەواڵگری ================= -->
-<div id="dossierModal" class="modal-dossier-overlay">
+<!-- مۆداڵی دۆسیەی خێزان -->
+<div id="dossierModal">
   <div class="dossier-terminal-box">
     <div class="dossier-top-bar">
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span style="font-family:var(--font-code);font-size:10px;color:var(--term-crimson);border:1px solid var(--term-crimson);padding:1px 6px;border-radius:3px;">TOP SECRET</span>
-        <h2 id="dossierTitle" style="font-size:13.5px;color:#fff;">دۆسیەی نهێنی</h2>
-      </div>
+      <h2 id="dossierTitle" style="font-size:13px;color:#fff;">دۆسیەی هەواڵگری خێزان</h2>
       <div style="display:flex;gap:6px;" id="dossierActions">
-        <button onclick="closeDossierModal()" class="exit-cmd-btn">[ ESC // داخستن ]</button>
+        <button onclick="$('dossierModal').style.display='none'" class="exit-cmd-btn">✕ داخستن</button>
       </div>
     </div>
-
     <div class="dossier-content-scroll" id="dossierBody"></div>
   </div>
 </div>
 
-<!-- شوێنی چاپی نهێنی فەرمی بۆ PDF (هەرگیز لەسەر شاشە دەرناکەوێت) -->
 <div id="printArea"></div>
 
 <script>
-/**
- * ڕێکخستنی بنکەی دراوەی شارەکان
- */
+const SUPABASE_PROJECT_URL = "https://cmxwzwyzioqcuhvquhqs.supabase.co";
+const API_KEY = "sb_publishable_wprvJ-HWR7vCTKH9HD370A_Cepk-nYD";
+
 const CITIES = {
-  erbil: {
-    name: 'هەولێر',
-    tag: '[ SEC-SYS // DATA-QUERY: ERBIL ]',
-    url: 'https://ebfunixtvuevknmjnjrv.supabase.co',
-    key: 'sb_publishable_yJ-m3quR_e5socN7LPwBsw_ZHMp26dr',
-    table: 'person',
-    isUpper: false
-  },
-  suli: {
-    name: 'سلێمانی',
-    tag: '[ SEC-SYS // DATA-QUERY: SULAIMANIYAH ]',
-    url: 'https://cmxwzwyzioqcuhvquhqs.supabase.co',
-    key: 'sb_publishable_wprvJ-HWR7vCTKH9HD370A_Cepk-nYD',
-    table: 'sulaymaniyah',
-    isUpper: true
-  },
-  duhok: {
-    name: 'دهۆك',
-    tag: '[ SEC-SYS // DATA-QUERY: DUHOK ]',
-    url: 'https://cmxwzwyzioqcuhvquhqs.supabase.co',
-    key: 'sb_publishable_wprvJ-HWR7vCTKH9HD370A_Cepk-nYD',
-    table: 'duhok',
-    isUpper: true
-  }
+  erbil: { name: 'هەولێر', url: 'https://ebfunixtvuevknmjnjrv.supabase.co', key: 'sb_publishable_yJ-m3quR_e5socN7LPwBsw_ZHMp26dr', table: 'person', isUpper: false },
+  suli: { name: 'سلێمانی', url: 'https://cmxwzwyzioqcuhvquhqs.supabase.co', key: 'sb_publishable_wprvJ-HWR7vCTKH9HD370A_Cepk-nYD', table: 'sulaymaniyah', isUpper: true },
+  duhok: { name: 'دهۆك', url: 'https://cmxwzwyzioqcuhvquhqs.supabase.co', key: 'sb_publishable_wprvJ-HWR7vCTKH9HD370A_Cepk-nYD', table: 'duhok', isUpper: true }
 };
 
 let activeCity = 'erbil';
-
-function getActiveCity() {
-  return CITIES[activeCity];
-}
+let currentUser = null;
+let userIp = '127.0.0.1';
+let isSignupMode = false;
+let sysConfig = { cost_civilians: 1, cost_electricity: 3, cost_family: 2, cost_pdf: 3, daily_free_points: 4, global_free_mode: false };
+let famData = [];
+let currentFamilyMembersCache = [];
+let currentFamilyInfoCache = {};
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-
-function cleanRawSymbols(text) {
-  if (!text) return '';
-  return String(text)
-    .replace(/[\u0000-\u001F\u007F-\u009F\uE000-\uF8FF\uFFF0-\uFFFF]/g, '')
-    .replace(/[„“”"«»'’‘،,ـ\-_~`\\\/󰀀]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function getVal(row, key) {
-  if (!row) return '';
-  return row[key.toLowerCase()] ?? row[key.toUpperCase()] ?? '';
-}
-
-function assembleFullName(r) {
-  const f = cleanRawSymbols(getVal(r, 'p_first'));
-  const fa = cleanRawSymbols(getVal(r, 'p_father'));
-  const g = cleanRawSymbols(getVal(r, 'p_grand'));
-  return [f, fa, g].filter(Boolean).join(' ') || '---';
-}
-
+function cleanRawSymbols(text) { return String(text ?? '').replace(/[\u0000-\u001F\u007F-\u009F\uE000-\uF8FF\uFFF0-\uFFFF„“”"«»'’‘،,ـ\-_~`\\\/󰀀]/g, '').replace(/\s+/g, ' ').trim(); }
+function getVal(row, key) { return row[key.toLowerCase()] ?? row[key.toUpperCase()] ?? ''; }
+function assembleFullName(r) { return [cleanRawSymbols(getVal(r, 'p_first')), cleanRawSymbols(getVal(r, 'p_father')), cleanRawSymbols(getVal(r, 'p_grand'))].filter(Boolean).join(' ') || '---'; }
 function calculateAge(birthVal) {
   if (!birthVal) return { year: 9999, ageText: '---' };
-  const str = String(birthVal);
-  const match = str.match(/\b(19\d{2}|20\d{2})\b/);
-  if (!match) return { year: 9999, ageText: '---' };
-  
-  const year = parseInt(match[1]);
-  const currentYear = new Date().getFullYear();
-  const age = currentYear - year;
-  return { year: year, ageText: `${age} ساڵ` };
+  const m = String(birthVal).match(/\b(19\d{2}|20\d{2})\b/);
+  if (!m) return { year: 9999, ageText: '---' };
+  const age = new Date().getFullYear() - parseInt(m[1]);
+  return { year: parseInt(m[1]), ageText: `${age} ساڵ` };
 }
 
-function switchCivilianCity(city) {
-  if (activeCity === city) return;
-  activeCity = city;
-
-  $('btnCityErbil').classList.toggle('active', city === 'erbil');
-  $('btnCitySuli').classList.toggle('active', city === 'suli');
-  $('btnCityDuhok').classList.toggle('active', city === 'duhok');
-
-  $('civTermBox').setAttribute('data-tag', getActiveCity().tag);
-
-  famPage = 1;
-  loadCivilians();
+// ================= پشکنینی ماوەی ٢٤ کاتژمێری کراوەیی کارەبا =================
+function isElectricityUnlocked24h() {
+  if (sysConfig.global_free_mode || (currentUser && currentUser.is_vip)) return true;
+  const userKey = currentUser ? currentUser.id : userIp;
+  const expiry = localStorage.getItem(`def_elec_unlock_${userKey}`);
+  if (expiry && Number(expiry) > Date.now()) {
+    return true; // هێشتا ٢٤ کاتژمێرەکە تەواو نەبووە
+  }
+  return false;
 }
 
+function setElectricityUnlocked24h() {
+  const userKey = currentUser ? currentUser.id : userIp;
+  const expiryTime = Date.now() + (24 * 60 * 60 * 1000); // ٢٤ کاتژمێر لەم ساتەوە
+  localStorage.setItem(`def_elec_unlock_${userKey}`, expiryTime);
+}
+
+function handleElectricityTabClick() {
+  // ئەگەر پێشتر کرابێتەوە لە ماوەی ٢٤ کاتژمێردا، ڕاستەوخۆ دەچێتە ناوی بەبێ پرسیار
+  if (isElectricityUnlocked24h()) {
+    switchTab('elec');
+  } else {
+    openElectricityPoll();
+  }
+}
+
+// ================= شاشەی Login و Signup =================
+function toggleAuthMode() {
+  isSignupMode = !isSignupMode;
+  $('authTitle').textContent = isSignupMode ? 'Sign up' : 'Login';
+  $('btnAuthSubmit').textContent = isSignupMode ? 'Create Account' : 'Log in';
+  $('authToggleLink').textContent = isSignupMode ? 'هەژمارت هەیە؟ چوونەژوورەوە (Login)' : 'دروستکردنی هەژماری نوێ (Sign up)';
+}
+
+async function handleAuthAction() {
+  const email = $('authEmail').value.trim();
+  const pass = $('authPass').value.trim();
+  if (!email || !pass) return alert("تکایە ئیمەیڵ و پاسۆرد بنووسە!");
+
+  if (isSignupMode) {
+    try {
+      const res = await fetch(`${SUPABASE_PROJECT_URL}/rest/v1/app_users`, {
+        method: 'POST',
+        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+        body: JSON.stringify({ email: email, password: pass, ip_address: userIp, points: 4 })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const errStr = err.message || err.details || JSON.stringify(err);
+        if (errStr.includes("unique") || errStr.includes("duplicate")) return alert("⚠️ ئەم ئیمەیڵە پێشتر تۆمارکراوە!");
+        return alert(`⚠️ هەڵە: ${errStr}`);
+      }
+      const data = await res.json();
+      alert("✅ هەژمارەکەت دروستکرا و ٤ خاڵت وەرگرت!");
+      loginSuccess(data[0]);
+    } catch(e) {
+      alert("هەڵە لە پەیوەندی بە داتابەیس: " + e.message);
+    }
+  } else {
+    try {
+      const res = await fetch(`${SUPABASE_PROJECT_URL}/rest/v1/app_users?email=eq.${encodeURIComponent(email)}&password=eq.${encodeURIComponent(pass)}&select=*`, {
+        headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
+      });
+      const list = await res.json();
+      if (!list || !list.length) return alert("ئیمەیڵ یان وشەی نهێنی هەڵەیە!");
+      loginSuccess(list[0]);
+    } catch(e) {
+      alert("هەڵە لە چوونەژوورەوە");
+    }
+  }
+}
+
+function loginSuccess(user) {
+  currentUser = user;
+  localStorage.setItem('def_intel_auth', JSON.stringify(user));
+  $('authScreen').style.display = 'none';
+  $('userEmailBadge').textContent = user.email;
+  updatePointsDisplay();
+  initEngine();
+}
+
+function logoutUser() {
+  localStorage.removeItem('def_intel_auth');
+  location.reload();
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const r = await fetch('https://api.ipify.org?format=json');
+    const d = await r.json();
+    userIp = d.ip;
+  } catch(e) { userIp = '127.0.0.1'; }
+  $('badgeIp').textContent = userIp;
+
+  const saved = localStorage.getItem('def_intel_auth');
+  if (saved) {
+    currentUser = JSON.parse(saved);
+    $('authScreen').style.display = 'none';
+    $('userEmailBadge').textContent = currentUser.email;
+    updatePointsDisplay();
+    initEngine();
+  }
+});
+
+// ================= هێنان و لێبڕینی خاڵ =================
+async function initEngine() {
+  await fetchConfig();
+  await refreshUserFromDB();
+}
+
+async function fetchConfig() {
+  try {
+    const res = await fetch(`${SUPABASE_PROJECT_URL}/rest/v1/sys_config?id=eq.1&select=*`, {
+      headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
+    });
+    const d = await res.json();
+    if (d && d[0]) sysConfig = d[0];
+  } catch(e) {}
+}
+
+async function refreshUserFromDB() {
+  if (!currentUser) return;
+  try {
+    const res = await fetch(`${SUPABASE_PROJECT_URL}/rest/v1/app_users?id=eq.${currentUser.id}&select=*`, {
+      headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
+    });
+    const d = await res.json();
+    if (d && d[0]) {
+      currentUser = d[0];
+      const today = new Date().toISOString().slice(0, 10);
+      if (currentUser.last_daily_date !== today) {
+        currentUser.points = (currentUser.points || 0) + (sysConfig.daily_free_points || 4);
+        currentUser.last_daily_date = today;
+        await fetch(`${SUPABASE_PROJECT_URL}/rest/v1/app_users?id=eq.${currentUser.id}`, {
+          method: 'PATCH',
+          headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ points: currentUser.points, last_daily_date: today })
+        });
+      }
+      localStorage.setItem('def_intel_auth', JSON.stringify(currentUser));
+      updatePointsDisplay();
+    }
+  } catch(e) {}
+}
+
+function updatePointsDisplay() {
+  if (!currentUser) return;
+  $('badgePts').textContent = `PTS: ${currentUser.points}`;
+}
+
+async function chargeUserPoints(cost, actionName) {
+  if (sysConfig.global_free_mode || (currentUser && currentUser.is_vip)) return true;
+  if (cost <= 0) return true;
+
+  if (!currentUser || currentUser.points < cost) {
+    alert(`⚠️ خاڵەکانت بەش ناکات!\nبۆ ئەم کردارە پێویستت بە ${cost} خاڵە، باڵانسی تۆ: ${currentUser ? currentUser.points : 0} خاڵە.\nپەیوەندی بکە بە: ${sysConfig.telegram_support || '@DefIntelAdmin'}`);
+    return false;
+  }
+
+  currentUser.points -= cost;
+  updatePointsDisplay();
+
+  try {
+    await fetch(`${SUPABASE_PROJECT_URL}/rest/v1/app_users?id=eq.${currentUser.id}`, {
+      method: 'PATCH',
+      headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ points: currentUser.points })
+    });
+    localStorage.setItem('def_intel_auth', JSON.stringify(currentUser));
+  } catch(e) {}
+  return true;
+}
+
+// ================= مۆداڵی پرسیاری کارەبا =================
+function openElectricityPoll() {
+  const cost = sysConfig.cost_electricity ?? 3;
+  $('pollPointsCost').textContent = cost;
+  $('pollQuestionText').innerHTML = `بۆ کردنەوەی ئەم بەشە پێویستت بە <b style="color:var(--term-green);">${cost}</b> خاڵە و بۆ ماوەی ٢٤ کاتژمێر بە کراوەیی دەمێنێتەوە، دڵنیایت؟`;
+  $('elecPollModal').style.display = 'flex';
+}
+
+function closeElectricityPoll() {
+  $('elecPollModal').style.display = 'none';
+}
+
+async function confirmEnterElectricity() {
+  const cost = sysConfig.cost_electricity ?? 3;
+  const ok = await chargeUserPoints(cost, 'open_electricity_map');
+  closeElectricityPoll();
+  if (ok) {
+    setElectricityUnlocked24h(); // پاشەکەوتکردنی کراوەیی بۆ ٢٤ کاتژمێر
+    switchTab('elec');
+  }
+}
+
+// ================= گۆڕینی تابەکان بەبێ کێشە =================
 function switchTab(t) {
   if (t === 'family') {
     $('tabFamily').style.display = 'flex';
@@ -604,60 +593,35 @@ function switchTab(t) {
     $('tabElec').style.display = 'block';
     $('btnTabFam').classList.remove('active');
     $('btnTabElec').classList.add('active', 'elec-mode');
-
     setTimeout(() => {
       initTacticalMap();
-      fetchVisiblePoints();
+      if (map) {
+        map.invalidateSize();
+        fetchVisiblePoints();
+      }
     }, 120);
   }
 }
 
-window.addEventListener('popstate', () => {
-  if ($('dossierModal').style.display === 'flex') {
-    $('dossierModal').style.display = 'none';
-  }
-});
+// ================= پشکنینی هاوڵاتی و خێزان =================
+async function executeCivilianSearch() {
+  const qF = cleanRawSymbols($('qFirst').value);
+  const qFa = cleanRawSymbols($('qFather').value);
+  const qG = cleanRawSymbols($('qGrand').value);
+  const qFam = $('qFam').value.trim();
 
-function openDossier(html, title, extraActionsHtml = '') {
-  $('dossierTitle').textContent = title || 'دۆسیەی هەواڵگری';
-  $('dossierBody').innerHTML = html;
-  $('dossierActions').innerHTML = `${extraActionsHtml}<button onclick="closeDossierModal()" class="exit-cmd-btn">[ ESC // داخستن ]</button>`;
-  $('dossierModal').style.display = 'flex';
-  window.history.pushState({ modalOpen: true }, "");
-}
+  if (!qF && !qFa && !qG && !qFam) return alert("تکایە ناوێک بنووسە بۆ پشکنین!");
 
-function closeDossierModal() {
-  $('dossierModal').style.display = 'none';
-  if (window.history.state && window.history.state.modalOpen) {
-    window.history.back();
-  }
-}
+  const cost = sysConfig.cost_civilians ?? 1;
+  const ok = await chargeUserPoints(cost, 'search_civilians');
+  if (!ok) return;
 
-// ================= ١: باری مەدەنی و هاوڵاتیان =================
-let famPage = 1;
-const famLimit = 250;
-let famData = [];
-let currentFamilyMembersCache = [];
-let currentFamilyInfoCache = {};
-
-async function doSearchCivilians() {
-  famPage = 1;
-  loadCivilians();
-}
-
-function navFam(dir) {
-  famPage += dir;
   loadCivilians();
 }
 
 async function loadCivilians() {
-  const cfg = getActiveCity();
-  const offset = (famPage - 1) * famLimit;
-  let params = new URLSearchParams();
-  params.set('select', '*');
-  params.set('limit', String(famLimit));
-  params.set('offset', String(offset));
-
+  const cfg = CITIES[activeCity];
+  let params = new URLSearchParams({ select: '*', limit: '100' });
   const qF = cleanRawSymbols($('qFirst').value);
   const qFa = cleanRawSymbols($('qFather').value);
   const qG = cleanRawSymbols($('qGrand').value);
@@ -673,111 +637,44 @@ async function loadCivilians() {
   if (qG) params.set(kGrand, `ilike.*${qG.replace(/[یيى]/g, '_').replace(/[کك]/g, '_')}*`);
   if (qFam) params.set(kFam, cfg.isUpper ? `ilike.*${qFam}*` : `eq.${qFam}`);
 
-  $('famStatus').textContent = `QUERYING [${cfg.name}]...`;
-
+  $('famStatus').textContent = `QUERYING...`;
   try {
     const res = await fetch(`${cfg.url}/rest/v1/${cfg.table}?${params.toString()}`, {
       headers: { 'apikey': cfg.key, 'Authorization': `Bearer ${cfg.key}` }
     });
+    famData = await res.json();
+    const tbody = $('famTableBody');
+    tbody.innerHTML = '';
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || "هەڵە لە پەیوەندی بە داتابەیس");
+    if (!famData || !famData.length) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:25px;color:var(--term-crimson);">❌ هیچ ناوێک نەدۆزرایەوە! (١ خاڵ لێبڕدرا)</td></tr>`;
+      $('famStatus').textContent = "0 RECORDS";
+      return;
     }
 
-    famData = await res.json();
-    renderCivilians(offset);
-  } catch (err) {
-    $('famTableBody').innerHTML = `<tr><td colspan="7" style="color:var(--term-crimson);text-align:center;padding:20px;">هەڵە: ${esc(err.message)}</td></tr>`;
-    $('famStatus').textContent = "ERROR";
+    famData.forEach((r, i) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="color:#64748b;">${i + 1}</td>
+        <td style="color:#fff;font-weight:bold;">${esc(assembleFullName(r))}</td>
+        <td style="color:#94a3b8;">${esc(cleanRawSymbols(getVal(r, 'p_mother')))}</td>
+        <td style="color:var(--term-green);font-family:var(--font-code);">${esc(cleanRawSymbols(getVal(r, 'p_birth')))}</td>
+        <td>${esc(cleanRawSymbols(getVal(r, 'fam_no')))}</td>
+        <td>${esc(cleanRawSymbols(getVal(r, 'rc_no')))}</td>
+        <td>
+          <button class="btn-tactical-act" style="color:var(--term-cyan);border-color:rgba(0,240,255,0.4);" onclick="executeFamilyModal(${i})">خێزان</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+    $('famStatus').textContent = `LOADED: ${famData.length}`;
+  } catch(e) {
+    $('famTableBody').innerHTML = `<tr><td colspan="7" style="color:var(--term-crimson);text-align:center;padding:20px;">هەڵە لە پەیوەندی بە داتابەیس</td></tr>`;
   }
 }
 
-function renderCivilians(offset) {
-  const tbody = $('famTableBody');
-  tbody.innerHTML = '';
-
-  if (!Array.isArray(famData) || !famData.length) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:25px;color:#64748b;">هیچ تۆمارێک نەدۆزرایەوە لە [${getActiveCity().name}]!</td></tr>`;
-    $('famStatus').textContent = "0 RECORDS";
-    $('btnPrev').disabled = true;
-    $('btnNext').disabled = true;
-    return;
-  }
-
-  famData.forEach((r, i) => {
-    const fullName = assembleFullName(r);
-    const mother = cleanRawSymbols(getVal(r, 'p_mother')) || '---';
-    const birth = cleanRawSymbols(getVal(r, 'p_birth')) || '---';
-    const famNo = cleanRawSymbols(getVal(r, 'fam_no')) || '---';
-    const rcNo = cleanRawSymbols(getVal(r, 'rc_no')) || '---';
-
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td style="color:#64748b;font-family:var(--font-code);">${offset + i + 1}</td>
-      <td style="color:#fff;font-weight:800;">${esc(fullName)}</td>
-      <td style="color:#94a3b8;">${esc(mother)}</td>
-      <td style="color:var(--term-green);font-family:var(--font-code);">${esc(birth)}</td>
-      <td><span class="tag-code tag-fam-code">${esc(famNo)}</span></td>
-      <td><span class="tag-code tag-rc-code">${esc(rcNo)}</span></td>
-      <td>
-        <div style="display:flex;gap:4px;">
-          <button class="btn-tactical-act" onclick="showPersonDossier(${i})">پرۆفایل</button>
-          <button class="btn-tactical-act" style="color:var(--term-cyan);border-color:rgba(0,240,255,0.4);" onclick="showFamilyMembersModal(${i})">خێزان</button>
-        </div>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  $('famStatus').textContent = `LOADED [${getActiveCity().name}]: ${famData.length}`;
-  $('famPageText').textContent = `PAGE ${famPage}`;
-  $('btnPrev').disabled = (famPage <= 1);
-  $('btnNext').disabled = (famData.length < famLimit);
-}
-
-function showPersonDossier(idx) {
-  const p = famData[idx];
-  if (!p) return;
-  const fullName = assembleFullName(p);
-
-  const pFirst = cleanRawSymbols(getVal(p, 'p_first'));
-  const pFather = cleanRawSymbols(getVal(p, 'p_father')) || '---';
-  const pGrand = cleanRawSymbols(getVal(p, 'p_grand')) || '---';
-  const pMother = cleanRawSymbols(getVal(p, 'p_mother')) || '---';
-  const pBirth = cleanRawSymbols(getVal(p, 'p_birth')) || '---';
-  const ssId = cleanRawSymbols(getVal(p, 'ss_id_no')) || '---';
-  const lg = cleanRawSymbols(getVal(p, 'ss_lg_no')) || '---';
-  const pg = cleanRawSymbols(getVal(p, 'ss_pg_no')) || '---';
-  const branch = cleanRawSymbols(getVal(p, 'ss_br_nm')) || cleanRawSymbols(getVal(p, 'ss_br_no')) || '---';
-  const famNo = cleanRawSymbols(getVal(p, 'fam_no')) || '---';
-  const rcNo = cleanRawSymbols(getVal(p, 'rc_no')) || '---';
-  const ageInfo = calculateAge(pBirth);
-
-  const html = `
-    <div style="background:#01050e;border:1px solid var(--term-cyan);border-radius:8px;padding:12px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">
-      <div>
-        <h3 style="color:var(--term-cyan);font-size:16px;">${esc(fullName)}</h3>
-        <span style="font-size:11px;color:#94a3b8;font-family:var(--font-code);">REGION: ${getActiveCity().name} | FAM_NO: ${esc(famNo)} // RC: ${esc(rcNo)}</span>
-      </div>
-      <button class="btn-terminal-exec" style="width:auto;padding:6px 12px;" onclick="crossSearchElec('${esc(pFirst)}')">⚡ پشکنینی نەخشەی کارەبا</button>
-    </div>
-
-    <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(190px, 1fr));gap:8px;">
-      <div style="background:#050d20;padding:8px 10px;border-radius:6px;border:1px solid #1e293b;"><div style="font-size:10px;color:var(--term-green);">ناوی باوک</div><div style="font-size:12.5px;color:#fff;">${esc(pFather)}</div></div>
-      <div style="background:#050d20;padding:8px 10px;border-radius:6px;border:1px solid #1e293b;"><div style="font-size:10px;color:var(--term-green);">ناوی باپیر</div><div style="font-size:12.5px;color:#fff;">${esc(pGrand)}</div></div>
-      <div style="background:#050d20;padding:8px 10px;border-radius:6px;border:1px solid #1e293b;"><div style="font-size:10px;color:var(--term-green);">ناوی دایک</div><div style="font-size:12.5px;color:#fff;">${esc(pMother)}</div></div>
-      <div style="background:#050d20;padding:8px 10px;border-radius:6px;border:1px solid #1e293b;"><div style="font-size:10px;color:var(--term-green);">لەدایکبوون / تەمەن</div><div style="font-size:12.5px;color:var(--term-cyan);">${esc(pBirth)} <span class="tag-code tag-age">${ageInfo.ageText}</span></div></div>
-      <div style="background:#050d20;padding:8px 10px;border-radius:6px;border:1px solid #1e293b;"><div style="font-size:10px;color:var(--term-green);">ژمارەی ناسنامە</div><div style="font-size:12.5px;color:#fff;font-family:var(--font-code);">${esc(ssId)}</div></div>
-      <div style="background:#050d20;padding:8px 10px;border-radius:6px;border:1px solid #1e293b;"><div style="font-size:10px;color:var(--term-green);">بەرگ / لاپەڕە</div><div style="font-size:12.5px;color:#fff;font-family:var(--font-code);">${esc(lg)} / ${esc(pg)}</div></div>
-      <div style="background:#050d20;padding:8px 10px;border-radius:6px;border:1px solid #1e293b;"><div style="font-size:10px;color:var(--term-green);">فەرمانگەی شارستانی</div><div style="font-size:12.5px;color:#fff;">${esc(branch)}</div></div>
-    </div>
-  `;
-  openDossier(html, fullName);
-}
-
-// هێنانی خێزان بە ڕیزبەندی تەمەن لە گەورەوە بۆ بچووک
-async function showFamilyMembersModal(idx) {
+// ================= هێنان و پیشاندانی خێزان لە دوای گەڕان =================
+async function executeFamilyModal(idx) {
   const p = famData[idx];
   if (!p) return;
 
@@ -785,7 +682,11 @@ async function showFamilyMembersModal(idx) {
   const rcNo = cleanRawSymbols(getVal(p, 'rc_no'));
   if (!famNo || famNo === '---') return alert("ژمارەی خێزان نییە!");
 
-  const cfg = getActiveCity();
+  const cost = sysConfig.cost_family ?? 2;
+  const ok = await chargeUserPoints(cost, 'view_family');
+  if (!ok) return;
+
+  const cfg = CITIES[activeCity];
   const kFam = cfg.isUpper ? 'FAM_NO' : 'fam_no';
   const kRc = cfg.isUpper ? 'RC_NO' : 'rc_no';
 
@@ -794,443 +695,170 @@ async function showFamilyMembersModal(idx) {
 
   try {
     const res = await fetch(url, { headers: { 'apikey': cfg.key, 'Authorization': `Bearer ${cfg.key}` } });
-    if (!res.ok) throw new Error("نەتوانرا خێزان وەربگیرێت");
     let members = await res.json();
+    if (!members.length) return alert("هیچ ئەندامێکی تر نەدۆزرایەوە!");
 
-    if (!Array.isArray(members) || !members.length) {
-      return alert("هیچ ئەندامێکی تر نەدۆزرایەوە!");
-    }
-
-    // ڕیزبەندی بەپێی تەمەن لە گەورەوە بۆ بچووک (Oldest to Youngest)
-    members.sort((a, b) => {
-      const bA = calculateAge(cleanRawSymbols(getVal(a, 'p_birth'))).year;
-      const bB = calculateAge(cleanRawSymbols(getVal(b, 'p_birth'))).year;
-      return bA - bB;
-    });
-
+    members.sort((a, b) => calculateAge(cleanRawSymbols(getVal(a, 'p_birth'))).year - calculateAge(cleanRawSymbols(getVal(b, 'p_birth'))).year);
     currentFamilyMembersCache = members;
     currentFamilyInfoCache = { famNo, rcNo, city: cfg.name };
 
-    const pdfBtnHtml = `<button onclick="exportFamilyPDF()" class="btn-pdf-export">📄 داگرتنی PDF / چاپ</button>`;
-
+    const pdfBtn = `<button onclick="executePdfPrint()" class="btn-pdf-export">📄 داگرتنی PDF</button>`;
     const html = `
-      <div style="background:#01050e;border:1px solid var(--term-cyan);padding:10px 14px;border-radius:6px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-        <div style="font-family:var(--font-code);font-size:11.5px;">
-          REGION: <b style="color:#fff;">${cfg.name}</b> | TARGET FAM_NO: <b style="color:var(--term-cyan);">${esc(famNo)}</b> | TOTAL: <b style="color:var(--term-green);">${members.length} ئەندام</b>
-        </div>
-        <div style="font-size:11px;color:var(--term-amber);">
-          ⚡ ڕیزبەندی: بەپێی تەمەن (لە گەورەوە بۆ بچووک)
-        </div>
+      <div style="background:#01050e;border:1px solid var(--term-cyan);padding:8px 12px;border-radius:6px;margin-bottom:10px;font-size:11.5px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+        <div>ناوچە: <b>${cfg.name}</b> | ژمارەی خێزان: <b style="color:var(--term-cyan);">${esc(famNo)}</b> | کۆی ئەندام: <b style="color:var(--term-green);">${members.length}</b></div>
+        ${pdfBtn}
       </div>
       <div style="overflow-x:auto;">
         <table>
           <thead>
-            <tr>
-              <th>#</th>
-              <th>ناوی تەواو</th>
-              <th>سیفەت</th>
-              <th>ناوی دایک</th>
-              <th>لەدایکبوون</th>
-              <th>تەمەن</th>
-              <th>ژمارەی ناسنامە</th>
-            </tr>
+            <tr><th>#</th><th>ناو</th><th>سیفەت</th><th>دایک</th><th>لەدایکبوون</th><th>تەمەن</th><th>ناسنامە</th></tr>
           </thead>
           <tbody>
-            ${members.map((m, i) => {
-              const birth = cleanRawSymbols(getVal(m, 'p_birth')) || '---';
-              const ageInfo = calculateAge(birth);
-              return `
-                <tr>
-                  <td style="color:#64748b;font-family:var(--font-code);">${i + 1}</td>
-                  <td style="color:#fff;font-weight:800;">${esc(assembleFullName(m))}</td>
-                  <td style="color:var(--term-green);">${esc(cleanRawSymbols(getVal(m, 'p_relation')) || '---')}</td>
-                  <td>${esc(cleanRawSymbols(getVal(m, 'p_mother')) || '---')}</td>
-                  <td style="font-family:var(--font-code);color:var(--term-cyan);">${esc(birth)}</td>
-                  <td><span class="tag-code tag-age">${ageInfo.ageText}</span></td>
-                  <td style="color:var(--term-amber);font-family:var(--font-code);">${esc(cleanRawSymbols(getVal(m, 'ss_id_no')) || '---')}</td>
-                </tr>
-              `;
-            }).join('')}
+            ${members.map((m, i) => `
+              <tr>
+                <td style="color:#64748b;">${i+1}</td>
+                <td style="color:#fff;font-weight:bold;">${esc(assembleFullName(m))}</td>
+                <td style="color:var(--term-green);">${esc(cleanRawSymbols(getVal(m, 'p_relation')) || '---')}</td>
+                <td>${esc(cleanRawSymbols(getVal(m, 'p_mother')) || '---')}</td>
+                <td style="color:var(--term-cyan);">${esc(cleanRawSymbols(getVal(m, 'p_birth')) || '---')}</td>
+                <td><span style="color:var(--term-green);font-size:10px;">${calculateAge(cleanRawSymbols(getVal(m, 'p_birth'))).ageText}</span></td>
+                <td style="color:var(--term-amber);font-family:var(--font-code);">${esc(cleanRawSymbols(getVal(m, 'ss_id_no')) || '---')}</td>
+              </tr>
+            `).join('')}
           </tbody>
         </table>
       </div>
     `;
 
-    openDossier(html, `دۆسیەی خێزانی #${famNo} (${cfg.name})`, pdfBtnHtml);
-  } catch (e) {
-    alert("هەڵە لە وەرگرتنی ئەندامان!");
+    $('dossierTitle').textContent = `دۆسیەی خێزانی #${famNo} (${cfg.name})`;
+    $('dossierBody').innerHTML = html;
+    $('dossierModal').style.display = 'flex';
+  } catch(e) {
+    alert("هەڵە لە وەرگرتنی ئەندامانی خێزان!");
   }
 }
 
-// دەرکردنی PDF بەبێ ئەوەی یەک پیت لەسەر شاشەکە بمێنێتەوە
-function exportFamilyPDF() {
-  if (!currentFamilyMembersCache || !currentFamilyMembersCache.length) return;
+async function executePdfPrint() {
+  const cost = sysConfig.cost_pdf ?? 3;
+  const ok = await chargeUserPoints(cost, 'export_pdf');
+  if (!ok) return;
 
   const info = currentFamilyInfoCache;
-  const printContainer = $('printArea');
-
-  const todayStr = new Date().toISOString().slice(0, 10);
-
-  const printHtml = `
-    <div style="padding: 25px; font-family: 'Vazirmatn', sans-serif; direction: rtl; text-align: right;">
-      
-      <!-- سەردێڕی فەرمی هەواڵگری -->
-      <div style="border-bottom: 2.5px solid #000; padding-bottom: 14px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
-        <div>
-          <h2 style="margin: 0; font-size: 19px; font-weight: 900; color: #000;">هەرێمی کوردستان - عێراق</h2>
-          <h3 style="margin: 4px 0; font-size: 15px; color: #111;">دەزگای هەواڵگری و چاودێری نیشتمانی</h3>
-          <p style="margin: 0; font-size: 12px; color: #444;">ناوەندی چاودێری و تۆماری باری مەدەنی // پارێزگای ${info.city}</p>
-        </div>
-        <div style="text-align: left; font-family: monospace;">
-          <div style="border: 2px solid #b91c1c; color: #b91c1c; padding: 4px 10px; font-weight: 900; font-size: 13px; display: inline-block; margin-bottom: 4px;">
-            نهێنی و باڵا // TOP SECRET
-          </div>
-          <div style="font-size: 11.5px; color: #333;">DATE: ${todayStr}</div>
-        </div>
-      </div>
-
-      <!-- زانیاری دۆسیە -->
-      <div style="background: #f1f5f9; border: 1.5px solid #94a3b8; padding: 10px 14px; margin-bottom: 16px; border-radius: 4px; display: flex; justify-content: space-between; font-size: 13px; color: #000;">
-        <span>ژمارەی خێزان: <b>${info.famNo}</b></span>
-        <span>ژمارەی تۆمار: <b>${info.rcNo || '---'}</b></span>
-        <span>کۆی ئەندامان: <b>${currentFamilyMembersCache.length} کەس</b></span>
-        <span>ڕیزبەندی: <b>بەپێی تەمەن (لە گەورەوە بۆ بچووک)</b></span>
-      </div>
-
-      <!-- خشتەی ئەندامان -->
-      <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 25px;">
-        <thead>
-          <tr style="background: #e2e8f0;">
-            <th style="border: 1px solid #475569; padding: 8px;">#</th>
-            <th style="border: 1px solid #475569; padding: 8px;">ناوی تەواو</th>
-            <th style="border: 1px solid #475569; padding: 8px;">سیفەت</th>
-            <th style="border: 1px solid #475569; padding: 8px;">ناوی دایک</th>
-            <th style="border: 1px solid #475569; padding: 8px;">لەدایکبوون</th>
-            <th style="border: 1px solid #475569; padding: 8px;">تەمەن</th>
-            <th style="border: 1px solid #475569; padding: 8px;">ژمارەی ناسنامە</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${currentFamilyMembersCache.map((m, i) => {
-            const birth = cleanRawSymbols(getVal(m, 'p_birth')) || '---';
-            const ageInfo = calculateAge(birth);
-            return `
-              <tr>
-                <td style="border: 1px solid #94a3b8; padding: 7px; text-align: center;">${i + 1}</td>
-                <td style="border: 1px solid #94a3b8; padding: 7px; font-weight: bold;">${esc(assembleFullName(m))}</td>
-                <td style="border: 1px solid #94a3b8; padding: 7px;">${esc(cleanRawSymbols(getVal(m, 'p_relation')) || '---')}</td>
-                <td style="border: 1px solid #94a3b8; padding: 7px;">${esc(cleanRawSymbols(getVal(m, 'p_mother')) || '---')}</td>
-                <td style="border: 1px solid #94a3b8; padding: 7px; text-align: center;">${esc(birth)}</td>
-                <td style="border: 1px solid #94a3b8; padding: 7px; text-align: center; font-weight: bold;">${ageInfo.ageText}</td>
-                <td style="border: 1px solid #94a3b8; padding: 7px; text-align: center; font-family: monospace;">${esc(cleanRawSymbols(getVal(m, 'ss_id_no')) || '---')}</td>
-              </tr>
-            `;
-          }).join('')}
-        </tbody>
-      </table>
-
-      <!-- مۆری فەرمی -->
-      <div style="margin-top: 40px; display: flex; justify-content: space-between; text-align: center; font-size: 13px;">
-        <div>
-          <p>ئەفسەری لێکۆڵینەوە و پشکنین</p>
-          <div style="margin-top: 35px; font-weight: bold;">[ مۆر و واژۆ ]</div>
-        </div>
-        <div style="border: 2px dashed #475569; padding: 12px 25px; border-radius: 6px; font-size: 12px; font-weight: bold;">
-          بەڕێوەبەرایەتی هەواڵگری<br>تۆماری مەدەنی دڵنیاکراو
-        </div>
-        <div>
-          <p>بەڕێوەبەری ناوەندی هەواڵگری</p>
-          <div style="margin-top: 35px; font-weight: bold;">[ پەسەندکراوە ]</div>
-        </div>
-      </div>
-
+  const pArea = $('printArea');
+  pArea.innerHTML = `
+    <div style="padding:25px;direction:rtl;text-align:right;">
+      <h2>دەزگای هەواڵگری نیشتمانی - بەڵگەنامەی فەرمی</h2>
+      <p>تۆماری مەدەنی / ژمارەی خێزان: ${info.famNo}</p>
+      <hr style="margin:12px 0;">
+      ${$('dossierBody').innerHTML}
+      <div style="margin-top:40px;color:#888;">بەڵگەنامەی پارێزراوی هەواڵگری // نهێنی و باڵا</div>
     </div>
   `;
-
-  printContainer.innerHTML = printHtml;
-  setTimeout(() => {
-    window.print();
-  }, 60);
+  window.print();
 }
 
-// دەستبەجێ دوای چاپ یان داخستن، زاکیرەی PDF پاک دەکرێتەوە تا هیچ نەمێنێت لەسەر شاشە
-window.addEventListener('afterprint', () => {
-  const p = $('printArea');
-  if (p) p.innerHTML = '';
-});
-
-function crossSearchElec(first) {
-  closeDossierModal();
-  switchTab('elec');
-  $('elecQuery').value = first;
-  doMultiSearchElectricity();
+function switchCivilianCity(c) {
+  activeCity = c;
+  $('btnCityErbil').classList.toggle('active', c === 'erbil');
+  $('btnCitySuli').classList.toggle('active', c === 'suli');
+  $('btnCityDuhok').classList.toggle('active', c === 'duhok');
+  $('famTableBody').innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:#64748b;">تکایە ناو بنووسە و کلیک لە [پشکنین] بکە.</td></tr>`;
 }
 
-
-// ================= ٢: نەخشەی کارەبا (چاککراو بە سکڕۆڵی ئاسان) =================
-const SUPABASE_PROJECT_URL = "https://ebfunixtvuevknmjnjrv.supabase.co";
-const API_KEY = "sb_publishable_yJ-m3quR_e5socN7LPwBsw_ZHMp26dr";
-
-let map = null;
-let tacticalLayer = null;
-let layerGoogle = null;
-let layerDark = null;
-let layerOsm = null;
-let coLocatedGroups = [];
+// ================= نەخشەی کارەبا (زوومکردن بۆ ٤٠٠م = Zoom 16) =================
+let map = null, tacticalLayer = null, layerGoogle = null, layerDark = null, layerOsm = null;
 let focusPulse = null;
-let isDrawerExpanded = false;
+const ZOOM_THRESHOLD_400M = 16; // ئاستی نزیکبوونەوە بۆ نزیکەی ٤٠٠ مەتر
 
 function initTacticalMap() {
   if (map) { map.invalidateSize(); return; }
-
   map = L.map('map', { preferCanvas: true, zoomControl: false }).setView([36.20, 44.00], 11);
-
   layerGoogle = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20 });
   layerDark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 });
   layerOsm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
-
   layerGoogle.addTo(map);
   tacticalLayer = L.layerGroup().addTo(map);
-
   map.on('moveend zoomend', debounce(fetchVisiblePoints, 180));
-
-  // ڕێگریکردن لەوەی نەخشە سکڕۆڵی مۆبایلەکە بگرێت
-  const drawer = $('elecDrawer');
-  if (drawer && window.L) {
-    L.DomEvent.disableScrollPropagation(drawer);
-    L.DomEvent.disableClickPropagation(drawer);
-  }
 }
 
-function toggleDrawerHeight() {
-  const drawer = $('elecDrawer');
-  const btn = $('btnToggleDrawer');
-  isDrawerExpanded = !isDrawerExpanded;
-
-  if (isDrawerExpanded) {
-    drawer.style.maxHeight = '90vh';
-    btn.textContent = '🗗 بچووککردنەوە';
-  } else {
-    drawer.style.maxHeight = '75vh';
-    btn.textContent = '⛶ فراوانکردن';
-  }
-}
-
-function debounce(fn, ms) {
-  let timer;
-  return function(...args) {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn.apply(this, args), ms);
-  };
-}
-
-function setMapLayer(type) {
+function debounce(fn, ms) { let t; return function(...a) { clearTimeout(t); t = setTimeout(() => fn.apply(this, a), ms); }; }
+function setMapLayer(t) {
   [layerGoogle, layerDark, layerOsm].forEach(l => map.removeLayer(l));
-  $('btnLGoogle').classList.remove('active');
-  $('btnLDark').classList.remove('active');
-  $('btnLOsm').classList.remove('active');
-
-  if (type === 'google') { layerGoogle.addTo(map); $('btnLGoogle').classList.add('active'); }
-  if (type === 'dark') { layerDark.addTo(map); $('btnLDark').classList.add('active'); }
-  if (type === 'osm') { layerOsm.addTo(map); $('btnLOsm').classList.add('active'); }
+  $('btnLGoogle').classList.remove('active'); $('btnLDark').classList.remove('active'); $('btnLOsm').classList.remove('active');
+  if (t === 'google') { layerGoogle.addTo(map); $('btnLGoogle').classList.add('active'); }
+  if (t === 'dark') { layerDark.addTo(map); $('btnLDark').classList.add('active'); }
+  if (t === 'osm') { layerOsm.addTo(map); $('btnLOsm').classList.add('active'); }
 }
 
 async function fetchVisiblePoints() {
   if (!map || !tacticalLayer) return;
 
+  const currentZoom = map.getZoom();
+
+  // پشکنینی زووم: ئەگەر لە ٤٠٠م دوورتر بێت خاڵەکان بارناکات تا سێرڤەر قورس نەبێت
+  if (currentZoom < ZOOM_THRESHOLD_400M) {
+    tacticalLayer.clearLayers();
+    $('zoomNoticePrompt').style.display = 'flex';
+    return;
+  } else {
+    $('zoomNoticePrompt').style.display = 'none';
+  }
+
   const b = map.getBounds();
-  const url = `${SUPABASE_PROJECT_URL}/rest/v1/electricity?select=*&latitude=gte.${b.getSouth()}&latitude=lte.${b.getNorth()}&longitude=gte.${b.getWest()}&longitude=lte.${b.getEast()}&limit=1200`;
+  const url = `https://ebfunixtvuevknmjnjrv.supabase.co/rest/v1/electricity?select=*&latitude=gte.${b.getSouth()}&latitude=lte.${b.getNorth()}&longitude=gte.${b.getWest()}&longitude=lte.${b.getEast()}&limit=1200`;
 
   try {
-    const res = await fetch(url, { headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` } });
-    if (!res.ok) return;
+    const res = await fetch(url, { headers: { 'apikey': 'sb_publishable_yJ-m3quR_e5socN7LPwBsw_ZHMp26dr', 'Authorization': 'Bearer sb_publishable_yJ-m3quR_e5socN7LPwBsw_ZHMp26dr' } });
     const pts = await res.json();
-
     tacticalLayer.clearLayers();
-
     const coordMap = new Map();
     pts.forEach(p => {
-      const lat = parseFloat(p.latitude);
-      const lon = parseFloat(p.longitude);
+      const lat = parseFloat(p.latitude), lon = parseFloat(p.longitude);
       if (!lat || !lon) return;
-
       const k = lat.toFixed(5) + '_' + lon.toFixed(5);
-      if (!coordMap.has(k)) {
-        coordMap.set(k, { lat, lon, rows: [] });
-      }
+      if (!coordMap.has(k)) coordMap.set(k, { lat, lon, rows: [] });
       coordMap.get(k).rows.push(p);
     });
-
-    coLocatedGroups = Array.from(coordMap.values());
-
-    coLocatedGroups.forEach((g, gIdx) => {
+    coordMap.forEach(g => {
       const count = g.rows.length;
-      let marker;
-
-      if (count > 1) {
-        const icon = L.divIcon({
-          className: 'micro-target-point',
-          html: `<div class="micro-multi-core">${count}</div>`,
-          iconSize: [13, 13]
-        });
-        marker = L.marker([g.lat, g.lon], { icon: icon });
-      } else {
-        const icon = L.divIcon({
-          className: 'micro-target-point',
-          html: `<div class="micro-ping-core"></div>`,
-          iconSize: [9, 9]
-        });
-        marker = L.marker([g.lat, g.lon], { icon: icon });
-      }
-
-      const popupHtml = `
-        <div style="direction:rtl;text-align:right;min-width:210px;max-height:260px;overflow-y:auto;padding:2px;">
-          <div style="color:var(--term-cyan);font-size:12px;font-weight:900;border-bottom:1px solid #334155;padding-bottom:4px;margin-bottom:6px;">
-            📍 شوێن: ${count} بەشداربووی تۆمارکراو
-          </div>
-          ${g.rows.map((it, idx) => `
-            <div style="background:#020408;padding:5px;border-radius:4px;margin-bottom:4px;border:1px solid #1e293b;">
-              <div style="color:#fff;font-size:11.5px;font-weight:800;">${idx+1}. ${esc(cleanRawSymbols(it.name))}</div>
-              <div style="font-size:10px;color:var(--term-green);font-family:var(--font-code);">ئەژمار: ${esc(it.account_no || '---')}</div>
-            </div>
-          `).join('')}
-          <button onclick="openCoLocationDossier(${gIdx})" style="width:100%;background:var(--term-cyan);color:#020408;border:none;padding:5px;border-radius:4px;font-weight:900;cursor:pointer;margin-top:4px;font-size:11px;">
-            بینینی دۆسیەی تەواو ↗
-          </button>
-        </div>
-      `;
-
-      marker.bindPopup(popupHtml);
-      tacticalLayer.addLayer(marker);
+      const icon = L.divIcon({
+        className: 'micro-target-point',
+        html: count > 1 ? `<div class="micro-multi-core">${count}</div>` : `<div class="micro-ping-core"></div>`,
+        iconSize: count > 1 ? [13, 13] : [9, 9]
+      });
+      const marker = L.marker([g.lat, g.lon], { icon }).addTo(tacticalLayer);
+      marker.bindPopup(`<div style="direction:rtl;text-align:right;"><b>📍 ${count} بەشداربوو</b><br>${g.rows.map(r => `<div>${esc(cleanRawSymbols(r.name))} (${esc(r.account_no)})</div>`).join('')}</div>`);
     });
-
-  } catch (e) {}
+  } catch(e) {}
 }
 
-function openCoLocationDossier(gIdx) {
-  const g = coLocatedGroups[gIdx];
-  if (!g) return;
-
-  const html = `
-    <div style="background:#020408;border:1px solid var(--term-cyan);border-radius:8px;padding:10px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
-      <div>
-        <h3 style="color:var(--term-cyan);font-size:14px;">کۆی گشتی (${g.rows.length}) بەشداربوو لەم شوێنەدان</h3>
-        <p style="font-size:11px;color:#94a3b8;font-family:var(--font-code);">${g.lat.toFixed(6)}, ${g.lon.toFixed(6)}</p>
-      </div>
-      <a target="_blank" href="https://www.google.com/maps?q=${g.lat},${g.lon}" style="background:var(--term-green);color:#000;padding:5px 10px;border-radius:5px;text-decoration:none;font-size:11px;font-weight:900;">Google Maps</a>
+async function executeElectricitySearch() {
+  const q = cleanRawSymbols($('elecQuery').value);
+  if (!q) return alert("ناو یان ئەژمارێک بنووسە!");
+  const res = await fetch(`https://ebfunixtvuevknmjnjrv.supabase.co/rest/v1/electricity?or=(name.ilike.*${encodeURIComponent(q)}*,account_no.ilike.*${encodeURIComponent(q)}*)&limit=100`, {
+    headers: { 'apikey': 'sb_publishable_yJ-m3quR_e5socN7LPwBsw_ZHMp26dr', 'Authorization': 'Bearer sb_publishable_yJ-m3quR_e5socN7LPwBsw_ZHMp26dr' }
+  });
+  const data = await res.json();
+  $('elecDrawer').style.display = 'block';
+  $('elecResultCount').textContent = `${data.length} ئەنجام`;
+  $('elecResultsGrid').innerHTML = data.map(d => `
+    <div class="compact-sub-card">
+      <div style="color:#fff;font-weight:bold;">${esc(cleanRawSymbols(d.name))}</div>
+      <div style="color:var(--term-cyan);font-size:11px;">ئەژمار: ${esc(d.account_no)} | ${esc(cleanRawSymbols(d.city))}</div>
+      <button onclick="focusElectricity(${d.latitude}, ${d.longitude}, '${esc(cleanRawSymbols(d.name))}')" style="margin-top:5px;background:var(--term-cyan);color:#000;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:10.5px;">📍 نیشاندان لەسەر نەخشە</button>
     </div>
-
-    <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));gap:8px;">
-      ${g.rows.map((r, i) => `
-        <div style="background:#060d1a;border:1px solid #1e293b;border-radius:8px;padding:10px;">
-          <div style="color:#fff;font-size:12.5px;font-weight:900;margin-bottom:4px;">
-            ${i+1}. ${esc(cleanRawSymbols(r.name) || 'هاوبەش')}
-          </div>
-          <div style="font-size:11px;color:#cbd5e1;line-height:1.6;">
-            <div>ئەژمار: <b style="color:var(--term-green);font-family:var(--font-code);">${esc(r.account_no || '---')}</b></div>
-            <div>ناوچە / شار: <b>${esc(cleanRawSymbols(r.city) || '---')}</b></div>
-            <div>تێبینی: <b>${esc(r.note || '---')}</b></div>
-          </div>
-          <button class="btn-terminal-exec" style="margin-top:6px;padding:3px;font-size:10.5px;" onclick="crossSearchCivilians('${esc(cleanRawSymbols(r.name))}')">👥 پشکنینی خێزانی</button>
-        </div>
-      `).join('')}
-    </div>
-  `;
-
-  openDossier(html, `دۆسیەی خاڵ: ${g.rows.length} تۆمار`);
+  `).join('');
 }
 
-async function doMultiSearchElectricity() {
-  const rawQ = $('elecQuery').value.trim();
-  const q = cleanRawSymbols(rawQ);
-  if (!q) return alert("تکایە ناوێک یان ژمارەیەک بنووسە!");
-
-  const drawer = $('elecDrawer');
-  const grid = $('elecResultsGrid');
-  drawer.style.display = 'block';
-  grid.innerHTML = '<div style="color:var(--term-green);padding:10px;font-size:11px;">دەگەڕێین لە داتابەیس...</div>';
-  $('elecResultCount').textContent = "[ QUERYING... ]";
-
-  try {
-    const url = `${SUPABASE_PROJECT_URL}/rest/v1/electricity?select=*&or=(name.ilike.*${encodeURIComponent(q)}*,account_no.ilike.*${encodeURIComponent(q)}*,city.ilike.*${encodeURIComponent(q)}*)&limit=250`;
-    const res = await fetch(url, { headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` } });
-    const records = await res.json();
-
-    $('elecResultCount').textContent = `[ ${records.length} تۆمار دۆزرایەوە ]`;
-
-    if (!records.length) {
-      grid.innerHTML = '<div style="color:var(--term-crimson);padding:10px;font-size:11px;">هیچ هاوبەشێک نەدۆزرایەوە!</div>';
-      return;
-    }
-
-    grid.innerHTML = '';
-    records.forEach(item => {
-      const card = document.createElement('div');
-      card.className = 'compact-sub-card';
-      card.innerHTML = `
-        <div class="card-title-sm">${esc(cleanRawSymbols(item.name))}</div>
-        <div class="card-meta-sm">
-          <span>ئەژمار: <b style="color:var(--term-cyan);">${esc(item.account_no || '---')}</b></span>
-          <span><b>${esc(cleanRawSymbols(item.city) || '---')}</b></span>
-        </div>
-        <div style="display:flex;gap:6px;margin-top:6px;">
-          <button class="btn-tactical-act" style="flex:1;" onclick='focusElectricityOnMap(${JSON.stringify(item)})'>📍 نەخشە</button>
-          <button class="btn-tactical-act" style="color:var(--term-cyan);" onclick='openSingleDossier(${JSON.stringify(item)})'>دۆسیە</button>
-        </div>
-      `;
-      grid.appendChild(card);
-    });
-
-  } catch (e) {
-    grid.innerHTML = `<div style="color:var(--term-crimson);padding:10px;">هەڵە: ${esc(e.message)}</div>`;
-  }
-}
-
-function focusElectricityOnMap(item) {
-  const lat = parseFloat(item.latitude);
-  const lon = parseFloat(item.longitude);
+function focusElectricity(lat, lon, name) {
   if (!lat || !lon) return alert("کۆئۆردینات نییە!");
-
   $('elecDrawer').style.display = 'none';
+  // ڕاستەوخۆ زووم دەکات بۆ ئاستی ١٧ (کەمتر لە ٤٠٠ مەتر) تا خاڵەکە دیار بێت
   map.setView([lat, lon], 17);
-
   if (focusPulse) map.removeLayer(focusPulse);
-
-  focusPulse = L.circleMarker([lat, lon], {
-    radius: 9,
-    color: '#00e5ff',
-    fillColor: '#ff003c',
-    fillOpacity: 1,
-    weight: 2
-  }).addTo(map);
-
-  focusPulse.bindPopup(`
-    <div style="direction:rtl;text-align:right;">
-      <b style="color:var(--term-cyan);font-size:12px;">${esc(cleanRawSymbols(item.name))}</b><br>
-      <span style="font-size:11px;">ئەژمار: ${esc(item.account_no || '---')}</span><br>
-      <span style="font-size:11px;color:#94a3b8;">ناوچە: ${esc(cleanRawSymbols(item.city) || '---')}</span><br>
-      <button onclick='openSingleDossier(${JSON.stringify(item)})' style="margin-top:5px;width:100%;background:var(--term-green);color:#000;border:none;padding:4px;border-radius:4px;font-weight:900;cursor:pointer;font-size:10.5px;">دۆسیەی تەواو</button>
-    </div>
-  `).openPopup();
+  focusPulse = L.circleMarker([lat, lon], { radius: 9, color: '#00e5ff', fillColor: '#ff003c', fillOpacity: 1, weight: 2 }).addTo(map);
+  focusPulse.bindPopup(`<b>${name}</b>`).openPopup();
 }
-
-function openSingleDossier(item) {
-  const g = { lat: parseFloat(item.latitude), lon: parseFloat(item.longitude), rows: [item] };
-  coLocatedGroups.push(g);
-  openCoLocationDossier(coLocatedGroups.length - 1);
-}
-
-function crossSearchCivilians(name) {
-  closeDossierModal();
-  switchTab('family');
-  const p = name.split(' ');
-  $('qFirst').value = p[0] || '';
-  $('qFather').value = p[1] || '';
-  doSearchCivilians();
-}
-
-// بارکردنی سەرەتایی هاوڵاتیان
-loadCivilians();
 </script>
 </body>
 </html>
