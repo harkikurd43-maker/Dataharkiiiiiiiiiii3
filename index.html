@@ -75,6 +75,22 @@ body {
   padding: 13px; border-radius: 12px; font-size: 14px; font-weight: 900;
   cursor: pointer; margin-top: 10px; transition: 0.2s; box-shadow: 0 4px 20px rgba(29, 97, 242, 0.4);
 }
+
+/* خانەی تایبەت بۆ شاردنەوەی تەواوەتی لە گووگڵ */
+.auth-input-div {
+  -webkit-text-security: disc !important;
+  text-security: disc !important;
+  white-space: nowrap;
+  overflow: hidden;
+  min-height: 44px;
+  line-height: 20px;
+  display: block;
+}
+.auth-input-div:empty::before {
+  content: attr(data-placeholder);
+  color: #64748b;
+  -webkit-text-security: none !important;
+}
 .btn-primary-auth:hover { background: #256be5; }
 
 .auth-toggle-link {
@@ -213,10 +229,10 @@ td { padding: 7px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); white-s
       </div>
     </div>
 
-    <div class="input-group">
-      <label class="input-label">Password</label>
+<div class="input-group">
+      <label class="input-label">کۆدی چوونەژوورەوە</label>
       <div class="input-box-wrapper">
-        <input type="text" id="authPass" class="auth-input secure-mask-input" placeholder="••••••" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true">
+        <div id="authPass" contenteditable="true" class="auth-input auth-input-div" data-placeholder="••••••"></div>
         <span class="input-icon">🔒</span>
       </div>
     </div>
@@ -428,7 +444,7 @@ function toggleAuthMode() {
 
 async function handleAuthAction() {
   const email = $('authEmail').value.trim();
-  const pass = $('authPass').value.trim();
+  const pass = ($('authPass').tagName === 'INPUT' ? $('authPass').value : $('authPass').innerText).trim();
   if (!email || !pass) return alert("تکایە ئیمەیڵ و پاسۆرد بنووسە!");
 
   if (isSignupMode) {
@@ -481,7 +497,12 @@ function loginSuccess(user) {
 
 function logoutUser() {
   localStorage.removeItem('def_intel_auth');
-  location.reload();
+  currentUser = null;
+  $('authEmail').value = '';
+  if ($('authPass').tagName === 'INPUT') $('authPass').value = '';
+  else $('authPass').innerText = '';
+  $('authScreen').style.display = 'flex';
+  if (isSignupMode) toggleAuthMode();
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
