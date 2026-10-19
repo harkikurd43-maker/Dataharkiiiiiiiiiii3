@@ -64,6 +64,12 @@ body {
   direction: ltr; text-align: left;
 }
 
+/* شاردنەوەی نووسین وەک پاسۆرد بەبێ ئەوەی گووگڵ هەستی پێبکات */
+.secure-mask-input {
+  -webkit-text-security: disc !important;
+  text-security: disc !important;
+}
+
 .btn-primary-auth {
   width: 100%; background: #1d61f2; border: none; color: #fff;
   padding: 13px; border-radius: 12px; font-size: 14px; font-weight: 900;
@@ -202,7 +208,7 @@ td { padding: 7px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); white-s
     <div class="input-group">
       <label class="input-label">Email</label>
       <div class="input-box-wrapper">
-        <input type="email" id="authEmail" class="auth-input" placeholder="jane.doe@example.com">
+        <input type="text" inputmode="email" id="authEmail" class="auth-input" placeholder="jane.doe@example.com" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true">
         <span class="input-icon">✉</span>
       </div>
     </div>
@@ -210,7 +216,7 @@ td { padding: 7px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); white-s
     <div class="input-group">
       <label class="input-label">Password</label>
       <div class="input-box-wrapper">
-        <input type="password" id="authPass" class="auth-input" placeholder="••••••">
+        <input type="text" id="authPass" class="auth-input secure-mask-input" placeholder="••••••" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true">
         <span class="input-icon">🔒</span>
       </div>
     </div>
@@ -459,6 +465,12 @@ async function handleAuthAction() {
 }
 
 function loginSuccess(user) {
+  if ($('authPass')) {
+    $('authPass').blur();
+    $('authPass').value = '';
+  }
+  if ($('authEmail')) $('authEmail').blur();
+
   currentUser = user;
   localStorage.setItem('def_intel_auth', JSON.stringify(user));
   $('authScreen').style.display = 'none';
