@@ -268,9 +268,9 @@ td { padding: 7px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); white-s
         <button id="btnCityDuhok" class="city-pill-btn" onclick="switchCivilianCity('duhok')">دهۆك</button>
       </div>
       <div class="nav-hacker-tabs">
-        <button id="btnTabFam" class="tab-cmd-btn active" onclick="switchTab('family')">👥 هاوڵاتیان</button>
-        <!-- بەستراوە بە پشکنینی ٢٤ کاتژمێری بۆ ئەوەی هەرکات ویستت بگەڕێیتەوە سەری بەبێ کێشە -->
-        <button id="btnTabElec" class="tab-cmd-btn" onclick="handleElectricityTabClick()">⚡ کارەبا</button>
+        <button type="button" id="btnTabFam" class="tab-cmd-btn active" onclick="switchTab('family')">👥 هاوڵاتیان</button>
+        <button type="button" id="btnTabElec" class="tab-cmd-btn" onclick="handleElectricityTabClick()">⚡ کارەبا</button>
+        <button type="button" id="btnTabQi" class="tab-cmd-btn" onclick="switchTab('qi')">💳 کی-کارت</button>
       </div>
     </div>
   </header>
@@ -338,9 +338,40 @@ td { padding: 7px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); white-s
     <div id="elecDrawer">
       <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
         <span id="elecResultCount" style="color:var(--term-cyan);font-size:11px;">0 ئەنجام</span>
-        <button onclick="$('elecDrawer').style.display='none'" style="background:transparent;border:1px solid #334155;color:#fff;border-radius:4px;">✕</button>
+        <button type="button" onclick="$('elecDrawer').style.display='none'" style="background:transparent;border:1px solid #334155;color:#fff;border-radius:4px;width:22px;height:22px;cursor:pointer;">✕</button>
       </div>
       <div id="elecResultsGrid" class="grid-tactical-results"></div>
+    </div>
+  </div>
+
+  <!-- ٣: بەشی کی-کارت و ئاوارەکان -->
+  <div id="tabQi" style="display:none; height:100%; overflow-y:auto; padding:8px 10px 60px; overscroll-behavior-y:contain;">
+    <div class="terminal-box">
+      <div class="hacker-grid" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));">
+        <div class="term-field">
+          <label>ناوی هاوڵاتی / ناوی وەکیل</label>
+          <input id="qQiName" placeholder="احمد / ارشد..." onkeydown="if(event.key==='Enter') executeQiSearch()">
+        </div>
+        <div class="term-field">
+          <label>ژمارەی مۆبایل</label>
+          <input id="qQiPhone" placeholder="0750... / 0770..." onkeydown="if(event.key==='Enter') executeQiSearch()">
+        </div>
+        <div class="term-field">
+          <label>ژمارەی کارتی زیرەک</label>
+          <input id="qQiCard" placeholder="رقم الذكية..." onkeydown="if(event.key==='Enter') executeQiSearch()">
+        </div>
+      </div>
+      <button type="button" class="btn-terminal-exec" style="margin-top:6px;" onclick="executeQiSearch()">[ EXECUTE // پشکنینی کی-کارت ]</button>
+    </div>
+
+    <div class="table-terminal-card" style="margin-top:8px;">
+      <div class="table-bar-hacker">
+        <span id="qiStatus" style="font-family:var(--font-code);font-size:10.5px;color:var(--term-cyan);">STATUS: READY</span>
+        <span id="qiCountBadge" style="font-family:var(--font-code);font-size:10.5px;color:var(--term-green);">0 ئەنجام</span>
+      </div>
+      <div id="qiResultsContainer" style="padding:10px; display:flex; flex-direction:column; gap:8px;">
+        <div style="text-align:center;padding:30px;color:#64748b;font-size:12px;">ناو یان ژمارەی مۆبایل بنووسە و کلیک لە [پشکنینی کی-کارت] بکە.</div>
+      </div>
     </div>
   </div>
 
@@ -616,16 +647,16 @@ async function confirmEnterElectricity() {
 
 // ================= گۆڕینی تابەکان بەبێ کێشە =================
 function switchTab(t) {
-  if (t === 'family') {
-    $('tabFamily').style.display = 'flex';
-    $('tabElec').style.display = 'none';
-    $('btnTabFam').classList.add('active');
-    $('btnTabElec').classList.remove('active', 'elec-mode');
-  } else {
-    $('tabFamily').style.display = 'none';
-    $('tabElec').style.display = 'block';
-    $('btnTabFam').classList.remove('active');
-    $('btnTabElec').classList.add('active', 'elec-mode');
+  $('tabFamily').style.display = t === 'family' ? 'flex' : 'none';
+  $('tabElec').style.display = t === 'elec' ? 'block' : 'none';
+  if ($('tabQi')) $('tabQi').style.display = t === 'qi' ? 'block' : 'none';
+
+  $('btnTabFam').classList.toggle('active', t === 'family');
+  $('btnTabElec').classList.toggle('active', t === 'elec');
+  $('btnTabElec').classList.toggle('elec-mode', t === 'elec');
+  if ($('btnTabQi')) $('btnTabQi').classList.toggle('active', t === 'qi');
+
+  if (t === 'elec') {
     setTimeout(() => {
       initTacticalMap();
       if (map) {
@@ -886,11 +917,147 @@ async function executeElectricitySearch() {
 function focusElectricity(lat, lon, name) {
   if (!lat || !lon) return alert("کۆئۆردینات نییە!");
   $('elecDrawer').style.display = 'none';
-  // ڕاستەوخۆ زووم دەکات بۆ ئاستی ١٧ (کەمتر لە ٤٠٠ مەتر) تا خاڵەکە دیار بێت
   map.setView([lat, lon], 17);
   if (focusPulse) map.removeLayer(focusPulse);
   focusPulse = L.circleMarker([lat, lon], { radius: 9, color: '#00e5ff', fillColor: '#ff003c', fillOpacity: 1, weight: 2 }).addTo(map);
   focusPulse.bindPopup(`<b>${name}</b>`).openPopup();
+}
+
+// ================= گەڕان و دۆسیەی کی-کارت بە لێبڕینی خاڵ =================
+let qiResultsData = [];
+
+async function executeQiSearch() {
+  const name = $('qQiName').value.trim();
+  const phone = $('qQiPhone').value.trim();
+  const card = $('qQiCard').value.trim();
+
+  if (!name && !phone && !card) {
+    return alert("تکایە ناوێک یان ژمارەی مۆبایل بنووسە!");
+  }
+
+  // لێبڕینی خاڵی پشکنینی کی-کارت
+  const cost = sysConfig.free_qicard ? 0 : (sysConfig.cost_qicard ?? 1);
+  const ok = await chargeUserPoints(cost, 'search_qicard');
+  if (!ok) return;
+
+  $('qiStatus').textContent = "QUERYING...";
+  $('qiResultsContainer').innerHTML = '<div style="text-align:center;padding:25px;color:var(--term-cyan);">⏳ خەریکی هێنانی داتایە لە داتابەیس...</div>';
+
+  let params = new URLSearchParams({ select: '*', limit: '100' });
+  if (name) {
+    params.set('or', `("الاسم حسب الشركة".ilike.*${name}*,"الاسم الثلاثي المرسل للذكية".ilike.*${name}*,"اسم الوكيل".ilike.*${name}*)`);
+  }
+  if (phone) {
+    params.set('or', `("رقم الموبايل".ilike.*${phone}*,"mobile".ilike.*${phone}*)`);
+  }
+  if (card) {
+    params.set('رقم الذكية', `ilike.*${card}*`);
+  }
+
+  try {
+    const res = await fetch(`${SUPABASE_PROJECT_URL}/rest/v1/qi_card?${params.toString()}`, {
+      headers: { 'apikey': API_KEY, 'Authorization': `Bearer ${API_KEY}` }
+    });
+    qiResultsData = await res.json();
+    renderQiResults(qiResultsData);
+  } catch (e) {
+    $('qiStatus').textContent = "ERROR";
+    $('qiResultsContainer').innerHTML = '<div style="text-align:center;color:red;padding:20px;">هەڵە لە هێنانی زانیارییەکان</div>';
+  }
+}
+
+function renderQiResults(list) {
+  const container = $('qiResultsContainer');
+  container.innerHTML = '';
+  $('qiCountBadge').textContent = `${list.length} ئەنجام`;
+  $('qiStatus').textContent = `LOADED: ${list.length}`;
+
+  if (!list.length) {
+    container.innerHTML = '<div style="text-align:center;padding:25px;color:var(--term-crimson);">❌ هیچ تۆمارێک نەدۆزرایەوە! (خاڵ لێبڕدرا)</div>';
+    return;
+  }
+
+  list.forEach((r, idx) => {
+    const fullName = r["الاسم حسب الشركة"] || r["الاسم الثلاثي المرسل للذكية"] || r["اسم الوكيل"] || "ناوی تۆمارنەکراو";
+    const phone = r["رقم الموبايل"] || r["mobile"] || "---";
+    const cardId = r["رقم الذكية"] || "---";
+    const momName = r["اسم الام"] || "---";
+    const curGov = r["المحافظة الحالية"] || r["محافظة الاصدار"] || "---";
+    const batch = r["الوجبة"] || "---";
+
+    const card = document.createElement('div');
+    card.className = 'compact-sub-card';
+    card.style.padding = '10px 12px';
+    card.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="color:#fff;font-size:13.5px;font-weight:900;">${idx + 1}. ${esc(fullName)}</span>
+        <span style="color:var(--term-green);font-size:10.5px;">وەجبە: ${esc(batch)}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:4px;margin:6px 0;font-size:11px;color:#cbd5e1;">
+        <div>📱 مۆبایل: <b style="color:var(--term-cyan);font-family:var(--font-code);">${esc(phone)}</b></div>
+        <div>💳 کارتی زیرەک: <b style="color:var(--term-green);font-family:var(--font-code);">${esc(cardId)}</b></div>
+        <div>🧕 دایک: <span>${esc(momName)}</span></div>
+        <div>📍 پارێزگا: <span>${esc(curGov)}</span></div>
+      </div>
+      <button type="button" class="btn-tactical-act" style="width:100%;color:var(--term-cyan);border-color:var(--term-cyan);margin-top:4px;" onclick="openQiDossier(${idx})">📂 پیشاندانی تەواوی ٥٠ زانیارییەکە ↗</button>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function openQiDossier(idx) {
+  const r = qiResultsData[idx];
+  if (!r) return;
+
+  const html = `
+    <div style="display:flex;flex-direction:column;gap:10px;font-size:12px;">
+      <div style="background:#050e24;border:1px solid #162a52;border-radius:8px;padding:8px 10px;">
+        <div style="color:var(--term-green);font-size:11.5px;margin-bottom:6px;">👤 زانیاری کەسی و خێزانی</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));gap:6px;">
+          <div>ناوی کۆمپانیا: <b>${esc(r["الاسم حسب الشركة"] || '---')}</b></div>
+          <div>ناوی بۆ کارتی زیرەک: <b>${esc(r["الاسم الثلاثي المرسل للذكية"] || '---')}</b></div>
+          <div>ناوی دایک: <b>${esc(r["اسم الام"] || '---')}</b></div>
+          <div>ناوی هاوسەر: <b>${esc(r["اسم الزوجة"] || '---')}</b></div>
+          <div>باری شارستانی: <b>${esc(r["الحالة الاجتماعية"] || '---')}</b></div>
+          <div>لەدایکبوون: <b style="color:var(--term-cyan);">${esc(r["تاريخ الميلاد"] || '---')}</b></div>
+          <div>ئەندامانی خێزان: <b style="color:var(--term-green);">${esc(r["عدد الافراد"] || '---')}</b></div>
+        </div>
+      </div>
+
+      <div style="background:#050e24;border:1px solid #162a52;border-radius:8px;padding:8px 10px;">
+        <div style="color:var(--term-green);font-size:11.5px;margin-bottom:6px;">💳 کارتی زیرەک و مۆبایل</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));gap:6px;">
+          <div>رقم الذكية: <b style="color:var(--term-cyan);font-family:var(--font-code);">${esc(r["رقم الذكية"] || '---')}</b></div>
+          <div>مۆبایل: <b style="color:var(--term-green);font-family:var(--font-code);">${esc(r["رقم الموبايل"] || '---')}</b></div>
+          <div>Mobile 2: <b>${esc(r["mobile"] || '---')}</b></div>
+          <div>الرقم التعريفي: <b>${esc(r["الرقم التعريفي"] || '---')}</b></div>
+          <div>بەرواری دەرچوون: <b>${esc(r["تاريخ الاصدار"] || '---')}</b></div>
+        </div>
+      </div>
+
+      <div style="background:#050e24;border:1px solid #162a52;border-radius:8px;padding:8px 10px;">
+        <div style="color:var(--term-green);font-size:11.5px;margin-bottom:6px;">📍 دۆسیەی ئاوارەیی و بەخشینی ٢٥٠</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));gap:6px;">
+          <div>ساڵی ئاوارەیی: <b style="color:var(--term-amber);">${esc(r["سنة النزوح"] || '---')}</b></div>
+          <div>پارێزگای ئێستا: <b>${esc(r["المحافظة الحالية"] || '---')}</b></div>
+          <div>قەزای ئێستا: <b>${esc(r["القضاء الحالي"] || '---')}</b></div>
+          <div>وەجبە: <b style="color:var(--term-green);">${esc(r["الوجبة"] || '---')}</b></div>
+          <div>مەنحەی 250 یەکەم: <b>${esc(r["دفعة الـ 250 الاولى"] || r["250 الاولى"] || '---')}</b></div>
+          <div>مەنحەی 250 دووەم: <b>${esc(r["دفعة الـ 250 الثانية"] || r["250 الثانية"] || '---')}</b></div>
+          <div>الموقف من المنح: <b>${esc(r["الموقف من المنح"] || '---')}</b></div>
+          <div>ناوی وەکیل: <b style="color:var(--term-cyan);">${esc(r["اسم الوكيل"] || '---')}</b></div>
+          <div>هۆکاری وەکالەت: <b>${esc(r["سبب الوكالة"] || '---')}</b></div>
+          <div>تۆمار (السجل): <b>${esc(r["رقم السجل"] || r["السجل"] || '---')}</b></div>
+          <div>رقم الاضبارة: <b>${esc(r["رقم الاضبارة"] || '---')}</b></div>
+          <div>تێبینییەکان: <b>${esc(r["ملاحظات الشركة"] || r["ملاحظات المصرف"] || '---')}</b></div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  $('dossierTitle').textContent = `دۆسیەی کی-کارت // ${esc(r["الاسم حسب الشركة"] || '')}`;
+  $('dossierBody').innerHTML = html;
+  $('dossierModal').style.display = 'flex';
 }
 </script>
 </body>
